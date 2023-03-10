@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"ibnlp/extract"
 	"ibnlp/search"
-	"os"
 
 	"github.com/urfave/cli/v2"
 )

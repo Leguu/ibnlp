@@ -15,7 +15,7 @@ stop_words = set(stopwords.words("english"))
 EMBEDDER_NAME = "all-MiniLM-L6-v2"
 embedder = SentenceTransformer(EMBEDDER_NAME)
 
-INPUT_PATH = "./data/PRC-economics-guide-en.txt"
+INPUT_PATH = r"C:\Users\Legu\repos\ibnlp\data\PRC-economics-guide-en.txt"
 
 with open(INPUT_PATH, "r", encoding="ascii") as f:
     lines = f.read()
@@ -89,9 +89,7 @@ def main():
 
     hits = hits[0]
 
-    print(f"Evaluation for query {query}")
-
-    print("\n".join([split[hit["corpus_id"]] for hit in hits]))
+    print("".join([split[hit["corpus_id"]] for hit in hits]))
 
 
 if __name__ == "__main__":

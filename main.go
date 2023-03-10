@@ -19,10 +19,11 @@ func main() {
 				Action:    extract.ExtractCommand,
 			},
 			{
-				Name:    "search",
-				Aliases: []string{"s"},
-				Usage:   "search for data",
-				Action:  search.SearchCommand,
+				Name:      "search",
+				Aliases:   []string{"s"},
+				Usage:     "search for data",
+				ArgsUsage: "[query...]",
+				Action:    search.SearchCommand,
 			},
 		},
 	}

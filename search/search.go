@@ -1,9 +1,6 @@
 package search
 
 import (
-	"os"
-	"os/exec"
-
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,15 +14,8 @@ type SearchProvider interface {
 }
 
 func SearchCommand(cli *cli.Context) error {
-	python := `C:\Users\Legu\AppData\Local\Programs\Python\Python310\python.exe`
-	command := exec.Command(python, "./search/search.py")
-
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-
-	if err := command.Run(); err != nil {
-		return err
-	}
+	pythonProvider := &PythonEncodingSearchProvider{}
+	pythonProvider.Search(cli.Args().First())
 
 	return nil
 }

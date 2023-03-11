@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import re
@@ -5,6 +6,10 @@ import sys
 from sentence_transformers import SentenceTransformer, util
 import xxhash
 from nltk.corpus import stopwords
+from contextlib import redirect_stderr
+
+with open("search_file.log", "a") as f:
+    redirect_stderr(f)
 
 stop_words = set(stopwords.words("english"))
 
@@ -15,12 +20,14 @@ stop_words = set(stopwords.words("english"))
 EMBEDDER_NAME = "all-MiniLM-L6-v2"
 embedder = SentenceTransformer(EMBEDDER_NAME)
 
+
 INPUT_PATH = r"C:\Users\Legu\repos\ibnlp\data\PRC-economics-guide-en.txt"
 
 with open(INPUT_PATH, "r", encoding="ascii") as f:
     lines = f.read()
 
 split = re.split(r"Page \d+\n#####\n\n", lines)
+
 input_hash = xxhash.xxh32(lines.encode()).hexdigest()
 
 EMBEDDINGS_PATH = INPUT_PATH.replace(".txt", ".pkl")
@@ -68,28 +75,52 @@ def try_load_embeddings():
     return embeddings["embeddings"]
 
 
+def yieldCommands():
+    for line in sys.stdin:
+        yield line.rstrip()
+
+
 def main():
     corpus_embeddings = try_load_embeddings()
 
     if corpus_embeddings is None:
         corpus_embeddings = generate_embeddings()
 
-    query = " ".join(sys.argv[1:])
-    query = query.replace(r"[^\w\s]", "").lower()
-    query = " ".join([word for word in query.split() if word not in stop_words])
+    for query in yieldCommands():
+        if query == "exit":
+            exit()
 
-    query_embedding = embedder.encode(query, convert_to_tensor=True)
-    query_embedding = query_embedding.to("cuda")
-    # query_embedding = util.normalize_embeddings(query_embedding)
+        query = query.replace(r"[^\w\s]", "").lower()
+        query = " ".join([word for word in query.split() if word not in stop_words])
 
-    top_k = min(2, len(split))
-    hits = util.semantic_search(
-        query_embedding, corpus_embeddings, top_k=top_k, score_function=util.dot_score
-    )
+        query_embedding = embedder.encode(query, convert_to_tensor=True)
+        query_embedding = query_embedding.to("cuda")
+        # query_embedding = util.normalize_embeddings(query_embedding)
 
-    hits = hits[0]
+        top_k = min(2, len(split))
+        hits = util.semantic_search(
+            query_embedding,
+            corpus_embeddings,
+            top_k=top_k,
+            score_function=util.dot_score,
+        )
 
-    print("".join([split[hit["corpus_id"]] for hit in hits]))
+        hits = hits[0]
+
+        lines = []
+        for hit in hits:
+            lines.append(
+                {
+                    "File": INPUT_PATH,
+                    "Page": hit["corpus_id"] + 1,
+                    "Match": split[hit["corpus_id"]],
+                    "Score": hit["score"],
+                }
+            )
+
+        jsonLines = json.dumps(lines)
+
+        print(jsonLines, flush=True)
 
 
 if __name__ == "__main__":

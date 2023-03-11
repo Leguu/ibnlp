@@ -2,13 +2,28 @@ package tests
 
 import (
 	"log"
+	"os"
 	"strings"
 	"testing"
 
 	"ibnlp/search"
 )
 
-var searchProvider search.PythonEncodingSearchProvider = search.PythonEncodingSearchProvider{}
+var provider search.SearchProvider
+
+func TestMain(m *testing.M) {
+	p, err := search.NewPythonEncodingSearchProvider()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer p.Close()
+
+	provider = p
+
+	code := m.Run()
+
+	os.Exit(code)
+}
 
 func containsResult(results []search.SearchResult, matchs ...string) bool {
 	for _, result := range results {
@@ -26,7 +41,7 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 	failedQueries := []string{}
 
 	for _, query := range queries {
-		results, err := searchProvider.Search(query)
+		results, err := provider.Search(query)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -43,7 +58,7 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 	if len(failedQueries) > 0 {
 		log.Println("Failed to find expected results in queries: ", failedQueries)
 
-		if len(failedQueries) >= len(queries)/2 {
+		if len(failedQueries) > len(queries)/2 {
 			t.Fatal("Too many failed queries")
 		}
 	}

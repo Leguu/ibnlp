@@ -1,4 +1,3 @@
-import os
 import sys
 import fitz
 
@@ -19,10 +18,7 @@ for fname in sys.argv[1:]:
 
     out_path = fname.replace(".pdf", ".txt")
 
-    if os.path.isfile(out_path):
-        os.remove(out_path)
-
-    out = open(out_path, "xb")
+    out = open(out_path, "wb")
 
     print("Extracting text from %s to %s" % (fname, out_path))
 

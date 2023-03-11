@@ -44,7 +44,8 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 	fails := 0
 
 	for _, query := range queries {
-		t.Run(query, func(t *testing.T) {
+		title := strings.Replace(query, "/", "", -1)
+		t.Run(title, func(t *testing.T) {
 			results, err := provider.Search(query)
 			if err != nil {
 				t.Fatal(err)
@@ -73,28 +74,61 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 }
 
 func TestSearchWordCount(t *testing.T) {
-	queries := []string{"What is the word count?", "What is the word count for the IA?", "What is the IA wordcount", "Internal Assessment Word Count"}
+	queries := []string{
+		"What is the word count?", "What is the word count for the IA?", "What is the IA wordcount", "Internal Assessment Word Count",
+		"What is the specified word limit for the internal assessment?",
+		"How many words should be included in the IA?",
+		"What is the required word count for the internal assessment?",
+		"What is the prescribed word length for the IA?",
+		"What is the maximum/minimum word count for the internal assessment?",
+	}
 	expectedResults := []string{"800"}
 
 	testQueries(t, queries, expectedResults)
 }
 
 func TestSearchPurpose(t *testing.T) {
-	queries := []string{"What is the purpose of the internal assessment?", "What is the purpose of the IA?", "Internal assessment purpose", "IA purpose"}
+	queries := []string{
+		"What is the purpose of the internal assessment?", "What is the purpose of the IA?", "Internal assessment purpose", "IA purpose",
+		"What are the objectives of conducting internal assessments?",
+		"What is the aim of performing internal assessments?",
+		"What is the goal of the internal assessment process?",
+		"Why is internal assessment important and what is its purpose?",
+		"What is the intended outcome of conducting internal assessments?",
+		"What is the goal or objective of the internal assessment?",
+		"What is the intended outcome of the IA?",
+		"What is the reason or rationale for completing the internal assessment?",
+		"What is the function or role of the IA within the overall assessment process?",
+		"What is the benefit or value of completing the internal assessment?",
+	}
 	expectedResults := []string{"demonstrate application skills knowledge", "pursue"}
 
 	testQueries(t, queries, expectedResults)
 }
 
 func TestSearchCriteria(t *testing.T) {
-	queries := []string{"What are the internal assessment criteria?", "What are the IA criteria?", "Internal assessment criteria", "IA criteria"}
+	queries := []string{
+		"What are the internal assessment criteria?", "What are the IA criteria?", "Internal assessment criteria", "IA criteria",
+		"What are the specific evaluation criteria used for the internal assessment?",
+		"What are the factors or standards that are taken into consideration when assessing the IA?",
+		"What are the elements that are used to assess the quality of the IA?",
+		"What are the grading or scoring rubrics used for the internal assessment?",
+		"What are the benchmarks or guidelines used to evaluate the IA?",
+	}
 	expectedResults := []string{"diagrams", "terminology", "application", "analysis", "key concept", "evaluation"}
 
 	testQueries(t, queries, expectedResults)
 }
 
 func TestSearchSustainableDevelopment(t *testing.T) {
-	queries := []string{"What is sustainable development?", "What is sustainable development in economics?", "What are the sustainable development goals"}
+	queries := []string{
+		"What is sustainable development?", "What is sustainable development in economics?", "What are the sustainable development goals",
+		"What does sustainable development mean in the context of economics?",
+		"What is the definition of sustainable development in economics?",
+		"How is sustainable development defined within the field of economics?",
+		"What are the economic principles underlying sustainable development?",
+		"Can you explain the concept of sustainable development as it relates to economics?",
+	}
 	expectedResults := []string{"poverty", "reduced inequalities", "decent work economic growth", "innovation infrastructure", "responsible consumption production"}
 
 	testQueries(t, queries, expectedResults)

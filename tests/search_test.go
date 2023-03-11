@@ -1,18 +1,21 @@
 package tests
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"ibnlp/search"
+	"ibnlp/search/python"
 )
 
-var provider search.SearchProvider
+var provider search.Searcher
 
 func TestMain(m *testing.M) {
-	p, err := search.NewPythonEncodingSearchProvider()
+	p, err := python.New()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,27 +41,32 @@ func containsResult(results []search.SearchResult, matchs ...string) bool {
 }
 
 func testQueries(t *testing.T, queries []string, expectedResults []string) {
-	failedQueries := []string{}
+	fails := 0
 
 	for _, query := range queries {
-		results, err := provider.Search(query)
-		if err != nil {
-			t.Fatal(err)
-		}
+		t.Run(query, func(t *testing.T) {
+			results, err := provider.Search(query)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		if len(results) < 2 {
-			t.Fatal("Expected at least two results, got ", len(results))
-		}
+			if len(results) < 2 {
+				t.Error("Expected at least two results, got ", len(results))
+			}
 
-		if !containsResult(results, expectedResults...) {
-			failedQueries = append(failedQueries, query)
-		}
+			if len(expectedResults) == 0 {
+				return
+			}
+
+			if !containsResult(results, expectedResults...) {
+				fails += 1
+				t.Skip("This query failed")
+			}
+		})
 	}
 
-	if len(failedQueries) > 0 {
-		log.Println("Failed to find expected results in queries: ", failedQueries)
-
-		if len(failedQueries) > len(queries)/2 {
+	if fails > 0 {
+		if float32(fails) >= float32(len(queries))/2 {
 			t.Fatal("Too many failed queries")
 		}
 	}
@@ -85,9 +93,36 @@ func TestSearchCriteria(t *testing.T) {
 	testQueries(t, queries, expectedResults)
 }
 
-func TestSustainableDevelopment(t *testing.T) {
+func TestSearchSustainableDevelopment(t *testing.T) {
 	queries := []string{"What is sustainable development?", "What is sustainable development in economics?", "What are the sustainable development goals"}
 	expectedResults := []string{"poverty", "reduced inequalities", "decent work economic growth", "innovation infrastructure", "responsible consumption production"}
 
 	testQueries(t, queries, expectedResults)
+}
+
+// Assure that the search can handle 100 queries a second at least
+func TestSpeed(t *testing.T) {
+	query := "some random string of characters, perhaps long, perhaps short, perhaps with a number"
+	queries := []string{}
+	for i := 0; i < 100; i++ {
+		queries = append(queries, query+fmt.Sprint(i))
+	}
+
+	// This warms up the encoder so subsequent queries run faster
+	provider.Search(query)
+
+	start := time.Now()
+
+	for _, query := range queries {
+		_, err := provider.Search(query)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	time_taken := time.Since(start)
+
+	if time_taken > time.Second {
+		t.Fatal("Search took too long, took ", time_taken.Seconds(), " seconds")
+	}
 }

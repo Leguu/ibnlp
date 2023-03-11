@@ -20,6 +20,9 @@ stop_words = set(stopwords.words("english"))
 EMBEDDER_NAME = "all-MiniLM-L6-v2"
 embedder = SentenceTransformer(EMBEDDER_NAME)
 
+READY_CODE = "ready"
+STOP_CODE = "stop"
+
 
 INPUT_PATH = r"C:\Users\Legu\repos\ibnlp\data\PRC-economics-guide-en.txt"
 
@@ -80,32 +83,44 @@ def yieldCommands():
         yield line.rstrip()
 
 
+def getQueryEmbeddings(query):
+    query = query.replace(r"[^\w\s]", "").lower()
+    query = " ".join([word for word in query.split() if word not in stop_words])
+
+    query_embedding = embedder.encode(query, convert_to_tensor=True)
+    query_embedding = query_embedding.to("cuda")
+    # query_embedding = util.normalize_embeddings(query_embedding)
+
+    return query_embedding
+
+
+def search(corpus, query):
+    top_k = min(2, len(split))
+    hits = util.semantic_search(
+        query,
+        corpus,
+        top_k=top_k,
+        score_function=util.dot_score,
+    )
+
+    return hits[0]
+
+
 def main():
     corpus_embeddings = try_load_embeddings()
 
     if corpus_embeddings is None:
         corpus_embeddings = generate_embeddings()
 
+    print(READY_CODE, flush=True)
+
     for query in yieldCommands():
-        if query == "exit":
+        if query == STOP_CODE:
             exit()
 
-        query = query.replace(r"[^\w\s]", "").lower()
-        query = " ".join([word for word in query.split() if word not in stop_words])
+        query_embedding = getQueryEmbeddings(query)
 
-        query_embedding = embedder.encode(query, convert_to_tensor=True)
-        query_embedding = query_embedding.to("cuda")
-        # query_embedding = util.normalize_embeddings(query_embedding)
-
-        top_k = min(2, len(split))
-        hits = util.semantic_search(
-            query_embedding,
-            corpus_embeddings,
-            top_k=top_k,
-            score_function=util.dot_score,
-        )
-
-        hits = hits[0]
+        hits = search(corpus_embeddings, query_embedding)
 
         lines = []
         for hit in hits:

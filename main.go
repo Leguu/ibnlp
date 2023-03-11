@@ -1,13 +1,34 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"ibnlp/extract"
-	"ibnlp/search"
+	"ibnlp/search/python"
 
 	"github.com/urfave/cli/v2"
 )
+
+func SearchCommand(cli *cli.Context) error {
+	pythonProvider, err := python.New()
+	if err != nil {
+		return err
+	}
+	defer pythonProvider.Close()
+
+	output, err := pythonProvider.Search(cli.Args().First())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Found", len(output), "results")
+	for _, result := range output {
+		log.Println(result.Match)
+	}
+
+	return nil
+}
 
 func main() {
 	app := &cli.App{
@@ -24,7 +45,7 @@ func main() {
 				Aliases:   []string{"s"},
 				Usage:     "search for data",
 				ArgsUsage: "[query...]",
-				Action:    search.SearchCommand,
+				Action:    SearchCommand,
 			},
 		},
 	}

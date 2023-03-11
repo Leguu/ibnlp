@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"ibnlp/search"
-	"ibnlp/search/python"
+	searchpython "ibnlp/search/python"
 )
 
 var provider search.Searcher
 
 func TestMain(m *testing.M) {
-	p, err := python.New()
+	p, err := searchpython.New()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,11 +76,11 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 func TestSearchWordCount(t *testing.T) {
 	queries := []string{
 		"What is the word count?", "What is the word count for the IA?", "What is the IA wordcount", "Internal Assessment Word Count",
-		"What is the specified word limit for the internal assessment?",
-		"How many words should be included in the IA?",
-		"What is the required word count for the internal assessment?",
-		"What is the prescribed word length for the IA?",
-		"What is the maximum/minimum word count for the internal assessment?",
+		"What is the specified word limit for the economics IA?",
+		"How many words are required for the economics IA?",
+		"What is the prescribed word count for the economics IA?",
+		"What is the maximum/minimum word count for the economics IA?",
+		"What is the recommended word length for the economics IA?",
 	}
 	expectedResults := []string{"800"}
 

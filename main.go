@@ -5,13 +5,13 @@ import (
 	"os"
 
 	"ibnlp/extract"
-	"ibnlp/search/python"
+	searchpython "ibnlp/search/python"
 
 	"github.com/urfave/cli/v2"
 )
 
 func SearchCommand(cli *cli.Context) error {
-	pythonProvider, err := python.New()
+	pythonProvider, err := searchpython.New()
 	if err != nil {
 		return err
 	}

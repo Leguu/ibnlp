@@ -1,21 +1,22 @@
-package python
+package searchpython
 
 import (
 	"bufio"
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"ibnlp/search"
 )
 
 const (
-	python_path          = `C:\Users\Legu\AppData\Local\Programs\Python\Python310\python.exe`
-	python_provider_path = `C:\Users\Legu\repos\ibnlp\search\python\search_file.py`
-	ready_code           = "ready"
-	stop_code            = "exit"
+	run_command = "run search"
+	ready_code  = "ready"
+	stop_code   = "stop"
 )
 
 type PythonSearcher struct {
@@ -25,7 +26,17 @@ type PythonSearcher struct {
 }
 
 func New() (*PythonSearcher, error) {
-	command := exec.Command(python_path, python_provider_path)
+	where, err := exec.Command("pipenv", "--where").Output()
+	if err != nil {
+		return nil, err
+	}
+
+	base := strings.TrimSpace(string(where))
+
+	command := exec.Command("pipenv", "run", "search")
+
+	command.Stderr = os.Stderr
+	command.Dir = filepath.Clean(base)
 
 	stdin, err := command.StdinPipe()
 	if err != nil {

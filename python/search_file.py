@@ -1,15 +1,11 @@
+import hashlib
 import json
 import os
 import pickle
 import re
 import sys
 from sentence_transformers import SentenceTransformer, util
-import xxhash
 from nltk.corpus import stopwords
-from contextlib import redirect_stderr
-
-with open("search_file.log", "a") as f:
-    redirect_stderr(f)
 
 stop_words = set(stopwords.words("english"))
 
@@ -24,16 +20,20 @@ READY_CODE = "ready"
 STOP_CODE = "stop"
 
 
-INPUT_PATH = r"C:\Users\Legu\repos\ibnlp\data\PRC-economics-guide-en.txt"
+INPUT_PATH = r"./data/PRC-economics-guide-en.txt"
 
 with open(INPUT_PATH, "r", encoding="ascii") as f:
     lines = f.read()
 
 split = re.split(r"Page \d+\n#####\n\n", lines)
 
-input_hash = xxhash.xxh32(lines.encode()).hexdigest()
+input_hash = hashlib.sha256(lines.encode()).hexdigest()
 
 EMBEDDINGS_PATH = INPUT_PATH.replace(".txt", ".pkl")
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 def generate_embeddings():

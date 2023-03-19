@@ -3,3 +3,4 @@ data/
 *.local
 *.log
 log.json
+*.code-workspace

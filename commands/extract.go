@@ -35,9 +35,9 @@ func ExtractCommand(ctx *cli.Context) error {
 		name := entry.Name()
 		path := folder + "/" + name
 
-		pdfRegex := regexp.MustCompile(`\.pdf$`)
+		pdfRegex := regexp.MustCompile(`\.pdf|\.txt$`)
 		if !pdfRegex.Match([]byte(path)) {
-			log.Println(`Skipping non-pdf file: "` + path + `"`)
+			log.Println(`Skipping non-supported file: "` + path + `"`)
 			continue
 		}
 

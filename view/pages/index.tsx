@@ -1,29 +1,20 @@
-import React from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import LoginProtector from "@/components/LoginProtector";
-import { ReactNode, useEffect, useRef, useState } from "react";
 import { AppToaster } from '@/toaster';
-import { Card, H5, Classes, InputGroup, Button, Callout } from '@blueprintjs/core';
-import { Tooltip2 } from '@blueprintjs/popover2';
+import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6 } from '@blueprintjs/core';
+import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
 
 interface SearchResult {
   query: string;
+  chatQuery: string;
   response: string;
 }
-
-const lorem: SearchResult = {
-  query: "Lorem Ipsum Demet IpsumLorem Ipsum Demet Ipsum",
-  response: "Lorem Ipsum Demet Ipsum Lorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet Ipsum",
-};
-
-const listQuery = {
-  query: "OIAWJODJAWID",
-  response: `Sure! According to page 14 of the "Ideal Libraries" guide, the six effective library practices to energize learning and inquiry are:\n\n1. Curating: Librarians are responsible for curating information, which means selecting, organizing, and presenting information resources in a way that is accessible and relevant to learners.\n\n2. Caretaking: Librarians are caretakers of both content and people. They are responsible for preserving and maintaining the library's physical collections, and for providing a sup…ical reading and media literacy skills.\n\n5. Co-creating: Librarians are co-creators of information with the school and the wider community. They collaborate with learners, teachers, and the community to create and share new knowledge and resources.\n\n6. Challenging: Librarians challenge learners to seek appropriate information, to use sound methods of inquiry and research, and to question the information they find and use. They encourage critical thinking and independent learning.\n\nI hope that helps!`
-};
 
 export default function Home() {
   const [results, setResults] = useState<SearchResult[]>([]);
 
   const [searchValue, setSearchValue] = useState('');
+  const [chatSearchValue, setChatSearchValue] = useState('');
 
   const [isSearching, setIsSearching] = useState(false);
 
@@ -33,7 +24,10 @@ export default function Home() {
     const result = await fetch('/api/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: searchValue })
+      body: JSON.stringify({
+        query: chatSearchValue.trim() || searchValue,
+        searchQuery: chatSearchValue.trim() !== '' ? searchValue : undefined
+      })
     });
 
     setIsSearching(false);
@@ -50,12 +44,14 @@ export default function Home() {
     const jsonResult = await result.json();
 
     let searchResult: SearchResult = {
-      query: searchValue,
+      query: searchValue.trim(),
+      chatQuery: chatSearchValue.trim(),
       response: jsonResult.response
     };
 
     setResults(r => [...r, searchResult]);
     setSearchValue('');
+    setChatSearchValue('');
   };
 
   const ref = useRef<HTMLDivElement | null>(null);
@@ -80,27 +76,78 @@ export default function Home() {
     </div>
   );
 
+  const [advancedSearch, _setAdvancedSearch] = useState(false);
+  const setAdvancedSearch = (value: boolean) => {
+    _setAdvancedSearch(value);
+    setChatSearchValue('');
+  };
+
   const searchBar = (
     <div className='flex flex-row pt-2'>
       <div className="flex-grow">
-        <InputGroup
-          large
-          type='search'
-          leftIcon='search'
-          placeholder="Search..."
-          disabled={isSearching}
-          value={searchValue}
-          onChange={e => setSearchValue(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && search()}
-        />
+        <FormGroup
+          helperText={<>
+            <Button disabled={isSearching} minimal small className='ml-2' onClick={() => setAdvancedSearch(!advancedSearch)}>
+              Advanced Search
+            </Button>
+            <Popover2
+              content={(
+                <div className='max-w-xs p-2 space-y-1'>
+                  <H6>Advanced search</H6>
+                  <p>
+                    This feature allows you to customize what prompt the AI gets.
+                    This is useful if you want the AI to do something specific,
+                    and can improve search results if your prompt contains information for only the AI.
+                    For Example:
+                  </p>
+
+                  <p>
+                    <b>{"File search: "}</b> <i>What is the purpose of the library?</i>
+                  </p>
+
+                  <p>
+                    <b>{"AI Prompt: "}</b> <i>Please summarize the purpose of a library in IB in 3 bullet points.</i>
+                  </p>
+                </div>
+              )}
+              renderTarget={({ ref, ...targetProps }) => (
+                <Button minimal small icon='help' elementRef={ref} {...targetProps} />
+              )}
+            />
+          </>}
+          className='m-0'
+        >
+          <InputGroup
+            large
+            type='search'
+            leftIcon='search'
+            placeholder="Search files..."
+            disabled={isSearching}
+            value={searchValue}
+            onChange={e => setSearchValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && search()}
+          />
+          {(advancedSearch) && (
+            <InputGroup
+              type='search'
+              placeholder='AI Prompt'
+              disabled={isSearching}
+              value={chatSearchValue}
+              onChange={e => setChatSearchValue(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && search()}
+              className='mt-1'
+            />
+          )}
+        </FormGroup>
       </div>
 
       <Button
         disabled={searchValue.trim() === ''}
         onClick={search}
         loading={isSearching}
-        className='ml-2'
+        className='ml-2 h-min'
         rightIcon='arrow-right'
+        large
       >
         <div className="hidden md:block">
           Search
@@ -117,11 +164,18 @@ export default function Home() {
           {results.map(result => <>
             <div className='flex w-full justify-end'>
               <Callout icon='help' className='w-fit max-w-xl' intent='primary'>
-                {result.query}
+                <p>
+                  {result.query}
+                </p>
+                {result.chatQuery !== "" && (
+                  <p>
+                    <b>{"AI Prompt: "}</b> {result.chatQuery}
+                  </p>
+                )}
               </Callout>
             </div>
 
-            <Callout icon='chat' className='max-w-xl whitespace-pre-wrap'>
+            <Callout icon='chat' className='max-w-xl whitespace-pre-wrap '>
               {result.response}
             </Callout>
           </>)}
@@ -140,4 +194,4 @@ Home.getLayout = (page: ReactNode) => {
       {page}
     </LoginProtector>
   );
-};
+};;

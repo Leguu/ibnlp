@@ -70,15 +70,17 @@ func ServerCommand(c *cli.Context) error {
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 	e.Use(middleware.RegisterSearchMiddleware(searcher))
 
-	development := os.Getenv("ENV") == "DEVELOPMENT" || c.Bool("development")
+	development := os.Getenv("ENV") == "DEVELOPMENT" || c.Bool("dev")
 
 	// var developmentBuild *exec.Cmd
 	if development {
+		log.Println("Serving development build")
 		setUpDev(e)
 		// developmentBuild := runViewDevelopmentBuild()
 		// defer developmentBuild.Process.Kill()
 	} else {
 		// buildViewProductionBuild()
+		log.Println("Serving production build")
 		e.Static("/*", "./view/out")
 	}
 

@@ -1,4 +1,4 @@
-import { Button, Classes, Colors, Dialog, DialogBody, DialogFooter, FormGroup, InputGroup, Spinner } from "@blueprintjs/core";
+import { Button, Classes, Dialog, DialogBody, FormGroup, InputGroup, Spinner } from "@blueprintjs/core";
 import React, { useEffect, useState } from "react";
 
 const login = (password: string) =>

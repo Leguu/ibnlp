@@ -24,9 +24,6 @@ EMBEDDER_NAME = "multi-qa-distilbert-dot-v1"
 BI_ENCODER = SentenceTransformer(EMBEDDER_NAME)
 CROSS_ENCODER = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
-READY_CODE = "ready"
-STOP_CODE = "stop"
-
 DATA_DIR = r"./data/output"
 
 CORPUS_PATH = os.path.join(DATA_DIR, "corpus.pkl")
@@ -51,61 +48,21 @@ class SearchFile:
         file_path = os.path.join(DATA_DIR, file_name)
 
         with open(file_path, "r", encoding="ascii") as file:
-            jsonLines = file.read()
+            json_lines = file.read()
 
         entries: list[Entry] = json.loads(
-            jsonLines, object_hook=lambda d: Entry.fromDict(**d)
+            json_lines, object_hook=lambda d: Entry.from_dict(**d)
         )
 
-        input_hash = hash([entry.fullPassage for entry in entries])
+        input_hash = hash([entry.full_passage for entry in entries])
 
         self.input_hash = input_hash
         self.file_path = file_path
         self.embeddings_path = file_path.replace(".json", ".pkl")
         self.entries = entries
 
-    # def generate_embeddings(self):
-    #     corpus_embeddings = BI_ENCODER.encode(
-    #         self.entries, normalize_embeddings=True, convert_to_numpy=False
-    #     )
 
-    #     corpus_object = {
-    #         "input_hash": self.input_hash,
-    #         "embedder_name": EMBEDDER_NAME,
-    #         "embeddings": corpus_embeddings,
-    #     }
-
-    #     with open(self.embeddings_path, "wb") as pkl:
-    #         pickle.dump(corpus_object, pkl)
-
-    #     return corpus_embeddings
-
-    # def try_load_embeddings(self):
-    #     if not os.path.isfile(self.embeddings_path):
-    #         return None
-
-    #     with open(self.embeddings_path, "rb") as pkl:
-    #         embeddings = pickle.load(pkl)
-
-    #     if (
-    #         "input_hash" not in embeddings
-    #         or "embeddings" not in embeddings
-    #         or "embedder_name" not in embeddings
-    #     ):
-    #         os.remove(self.embeddings_path)
-    #         return None
-
-    #     if (
-    #         embeddings["input_hash"] != self.input_hash
-    #         or embeddings["embedder_name"] != EMBEDDER_NAME
-    #     ):
-    #         os.remove(self.embeddings_path)
-    #         return None
-
-    #     return embeddings["embeddings"]
-
-
-def getQueryEmbeddings(query: str) -> Tensor:
+def get_query_embeddings(query: str) -> Tensor:
     query = query.replace(r"[^\w\s]", "").lower()
     query = " ".join([word for word in query.split() if word not in stop_words])
 
@@ -113,7 +70,7 @@ def getQueryEmbeddings(query: str) -> Tensor:
         query, convert_to_tensor=True, normalize_embeddings=True
     )
     if not isinstance(query_embedding, Tensor):
-        raise Exception(
+        raise TypeError(
             "Expected query_embedding to be type Tensor, got: ", type(query_embedding)
         )
     query_embedding.cuda()
@@ -144,13 +101,13 @@ class SearchResult:
 
 
 class Searcher:
-    searchFiles: list[SearchFile]
+    search_files: list[SearchFile]
     corpus: Tensor
 
-    def __init__(self, searchFiles: list[SearchFile]) -> None:
-        self.searchFiles = searchFiles
-        entries = flatten([searchFile.entries for searchFile in searchFiles])
-        optimisedPassages = [entry.optimisedPassage for entry in entries]
+    def __init__(self, search_files: list[SearchFile]) -> None:
+        self.search_files = search_files
+        entries = flatten([searchFile.entries for searchFile in search_files])
+        optimised_passages = [entry.optimised_passage for entry in entries]
         eprint("All passages: ", len(entries))
 
         if os.path.isfile(CORPUS_PATH):
@@ -158,10 +115,10 @@ class Searcher:
                 self.corpus = pickle.load(pkl)
         else:
             corpus = BI_ENCODER.encode(
-                optimisedPassages, convert_to_tensor=True, normalize_embeddings=True
+                optimised_passages, convert_to_tensor=True, normalize_embeddings=True
             )
             if not isinstance(corpus, Tensor):
-                raise Exception(
+                raise TypeError(
                     "Expected corpus to be type Tensor, got: ", type(corpus)
                 )
             corpus.cuda()
@@ -171,27 +128,27 @@ class Searcher:
             with open(CORPUS_PATH, "wb") as pkl:
                 pickle.dump(self.corpus, pkl)
 
-    def getFileAndEntry(self, index: int) -> tuple[SearchFile, Entry]:
-        for searchFile in self.searchFiles:
-            if index < len(searchFile.entries):
-                return searchFile, searchFile.entries[index]
-            index -= len(searchFile.entries)
+    def get_file_and_entry(self, index: int) -> tuple[SearchFile, Entry]:
+        for search_file in self.search_files:
+            if index < len(search_file.entries):
+                return search_file, search_file.entries[index]
+            index -= len(search_file.entries)
 
-        raise Exception("Index out of range")
+        raise IndexError("Index out of range")
 
     def search(self, query: str) -> list[SearchResult]:
-        question_embedding = getQueryEmbeddings(query)
+        question_embedding = get_query_embeddings(query)
         question_embedding = question_embedding.cuda()
         hits = util.semantic_search(
             question_embedding, self.corpus, top_k=TOP_K, score_function=util.dot_score
+        )[0]
+
+        entries = [self.get_file_and_entry(hit["corpus_id"])[1] for hit in hits]
+        full_passages = [entry.full_passage for entry in entries]
+
+        cross_scores = CROSS_ENCODER.predict(
+            [[query, fulL_passage] for fulL_passage in full_passages],
         )
-        hits = hits[0]
-
-        entries = [self.getFileAndEntry(hit["corpus_id"])[1] for hit in hits]
-        fullPassages = [entry.fullPassage for entry in entries]
-
-        cross_input = zip([query] * len(fullPassages), fullPassages)
-        cross_scores = CROSS_ENCODER.predict(list([list(pair) for pair in cross_input]))
 
         for i in range(len(cross_scores)):
             hits[i]["cross-score"] = cross_scores[i]
@@ -201,13 +158,13 @@ class Searcher:
         results: list[SearchResult] = []
         for hit in hits:
             index = hit["corpus_id"]
-            [file, entry] = self.getFileAndEntry(index)
+            [file, entry] = self.get_file_and_entry(index)
 
             results.append(
                 SearchResult(
                     Path(file.file_path).stem,
                     entry.page,
-                    entry.fullPassage,
+                    entry.full_passage,
                     hit["score"],
                 )
             )
@@ -235,10 +192,10 @@ eprint(
 
 
 async def search(request: Request):
-    queryString = str(await request.body())
-    results = searcher.search(queryString)
+    query_string = str(await request.body())
+    results = searcher.search(query_string)
 
-    return JSONResponse([result.__dict__ for result in results[:RETURN_LIMIT]])
+    return JSONResponse([result.__dict__ for result in results])
 
 
 development = os.environ.get("ENV") == "DEVELOPMENT"

@@ -10,6 +10,9 @@ interface SearchResult {
   response: string;
 }
 
+const aiPrompt = 'AI prompt';
+const searchPrompt = 'Search files';
+
 export default function Home() {
   const [results, setResults] = useState<SearchResult[]>([]);
 
@@ -102,11 +105,11 @@ export default function Home() {
                   </p>
 
                   <p>
-                    <b>{"File search: "}</b> <i>What is the purpose of the library?</i>
+                    <b>{`${searchPrompt}: `}</b> <i>What is the purpose of the library?</i>
                   </p>
 
                   <p>
-                    <b>{"AI Prompt: "}</b> <i>Please summarize the purpose of a library in IB in 3 bullet points.</i>
+                    <b>{`${aiPrompt}: `}</b> <i>Please summarize the purpose of a library in IB in 3 bullet points.</i>
                   </p>
                 </div>
               )}
@@ -121,7 +124,7 @@ export default function Home() {
             large
             type='search'
             leftIcon='search'
-            placeholder="Search files..."
+            placeholder={`${searchPrompt}...`}
             disabled={isSearching}
             value={searchValue}
             onChange={e => setSearchValue(e.target.value)}
@@ -130,7 +133,7 @@ export default function Home() {
           {(advancedSearch) && (
             <InputGroup
               type='search'
-              placeholder='AI Prompt'
+              placeholder={aiPrompt}
               disabled={isSearching}
               value={chatSearchValue}
               onChange={e => setChatSearchValue(e.target.value)}
@@ -169,7 +172,7 @@ export default function Home() {
                 </p>
                 {result.chatQuery !== "" && (
                   <p>
-                    <b>{"AI Prompt: "}</b> {result.chatQuery}
+                    <b>{`${aiPrompt}: `}</b> {result.chatQuery}
                   </p>
                 )}
               </Callout>

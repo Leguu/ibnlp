@@ -1,6 +1,7 @@
-package extract
+package commands
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -8,18 +9,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func extractPdf(path string) error {
-	command := exec.Command("python", "./extract/extract.py")
-	command.Args = append(command.Args, path)
+func getExtractCommand() *exec.Cmd {
+	command := exec.Command("pipenv", "run", "extract")
 
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
-	if err := command.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return command
 }
 
 func ExtractCommand(ctx *cli.Context) error {
@@ -33,14 +29,23 @@ func ExtractCommand(ctx *cli.Context) error {
 		return err
 	}
 
+	extractCommand := getExtractCommand()
+
 	for _, entry := range entries {
 		name := entry.Name()
 		path := folder + "/" + name
 
 		pdfRegex := regexp.MustCompile(`\.pdf$`)
-		if pdfRegex.Match([]byte(path)) {
-			extractPdf(folder + "/" + name)
+		if !pdfRegex.Match([]byte(path)) {
+			log.Println(`Skipping non-pdf file: "` + path + `"`)
+			continue
 		}
+
+		extractCommand.Args = append(extractCommand.Args, path)
+	}
+
+	if err := extractCommand.Run(); err != nil {
+		log.Fatal(err)
 	}
 
 	return nil

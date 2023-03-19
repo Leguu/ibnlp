@@ -4,13 +4,19 @@ verify_ssl = true
 name = "pypi"
 
 [scripts]
-search = "python ./python/search_file.py"
+search = "uvicorn python.search_file:app --port $PYTHON_SEARCH_SERVER_PORT --reload"
+extract = "python ./python/extract.py"
 
 [packages]
 
 [dev-packages]
 sentence-transformers = "*"
 nltk = "*"
+flask = "*"
+python-dotenv = "*"
+waitress = "*"
+uvicorn = "*"
+starlette = "*"
 
 [requires]
 python_version = "3.10"

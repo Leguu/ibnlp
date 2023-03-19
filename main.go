@@ -4,33 +4,18 @@ import (
 	"log"
 	"os"
 
-	"ibnlp/extract"
-	searchpython "ibnlp/search/python"
+	"ibnlp/commands"
 
+	"github.com/joho/godotenv"
 	"github.com/urfave/cli/v2"
 )
 
-func SearchCommand(cli *cli.Context) error {
-	pythonProvider, err := searchpython.New()
-	if err != nil {
-		return err
-	}
-	defer pythonProvider.Close()
-
-	output, err := pythonProvider.Search(cli.Args().First())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Found", len(output), "results")
-	for _, result := range output {
-		log.Println(result.Match)
-	}
-
-	return nil
-}
-
 func main() {
+	err := godotenv.Load(".env", ".env.local")
+	if err != nil {
+		log.Fatal("error loading .env file")
+	}
+
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{
@@ -38,14 +23,27 @@ func main() {
 				Aliases:   []string{"e"},
 				Usage:     "extract data from files for search",
 				ArgsUsage: "[folder]",
-				Action:    extract.ExtractCommand,
+				Action:    commands.ExtractCommand,
 			},
 			{
 				Name:      "search",
 				Aliases:   []string{"s"},
 				Usage:     "search for data",
 				ArgsUsage: "[query...]",
-				Action:    SearchCommand,
+				Action:    commands.SearchCommand,
+			},
+			{
+				Name:   "serve",
+				Usage:  "serve the search API",
+				Action: commands.ServerCommand,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "dev",
+						Aliases: []string{"d"},
+						Value:   false,
+						Usage:   "run in development mode (if true, overrides .env)",
+					},
+				},
 			},
 		},
 	}

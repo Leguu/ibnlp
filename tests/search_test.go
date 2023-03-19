@@ -1,20 +1,30 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"ibnlp/search"
 	searchpython "ibnlp/search/python"
+
+	"github.com/joho/godotenv"
+	"golang.org/x/sync/semaphore"
 )
 
 var provider search.Searcher
 
 func TestMain(m *testing.M) {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Fatal("error loading .env file")
+	}
+
 	p, err := searchpython.New()
 	if err != nil {
 		log.Fatal(err)
@@ -43,16 +53,27 @@ func containsResult(results []search.SearchResult, matchs ...string) bool {
 func testQueries(t *testing.T, queries []string, expectedResults []string) {
 	fails := 0
 
+	wg := sync.WaitGroup{}
+
+	maxCalls := semaphore.NewWeighted(4)
+
+	ctx := context.Background()
+
 	for _, query := range queries {
 		title := strings.Replace(query, "/", "", -1)
-		t.Run(title, func(t *testing.T) {
+		maxCalls.Acquire(ctx, 1)
+		wg.Add(1)
+		go t.Run(title, func(t *testing.T) {
+			defer wg.Done()
+			defer maxCalls.Release(1)
+
 			results, err := provider.Search(query)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if len(results) < 2 {
-				t.Error("Expected at least two results, got ", len(results))
+			if len(results) != 2 {
+				t.Error("Expected exactly two results, got ", len(results))
 			}
 
 			if len(expectedResults) == 0 {
@@ -65,6 +86,8 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 			}
 		})
 	}
+
+	wg.Wait()
 
 	if fails > 0 {
 		if float32(fails) >= float32(len(queries))/2 {
@@ -134,6 +157,31 @@ func TestSearchSustainableDevelopment(t *testing.T) {
 	testQueries(t, queries, expectedResults)
 }
 
+func TestProjectZero(t *testing.T) {
+	queries := []string{
+		"What is project zero?", "What is project zero in economics?", "What is project zero economics?",
+		"What is the project zero initiative?",
+		"What is the project zero init",
+	}
+	expectedResults := []string{"project zero"}
+
+	testQueries(t, queries, expectedResults)
+}
+
+func TestLearnerProfile(t *testing.T) {
+	queries := []string{
+		"What are the IB learner profiles?",
+		"What is meant by the term 'IB learner profiles'?",
+		"What are the characteristics or attributes of an IB learner?",
+		"What are the qualities or traits that the IB learner profiles aim to develop?",
+		"What is the purpose of the IB learner profiles in the International Baccalaureate program?",
+		"How do the IB learner profiles relate to the mission and philosophy of the International Baccalaureate?",
+	}
+	expectedResults := []string{"inquirer", "knowledgeable", "thinker", "communicator", "principled", "open", "caring", "risk", "balanced", "reflective"}
+
+	testQueries(t, queries, expectedResults)
+}
+
 // Assure that the search can handle 100 queries a second at least
 func TestSpeed(t *testing.T) {
 	query := "some random string of characters, perhaps long, perhaps short, perhaps with a number"
@@ -147,12 +195,27 @@ func TestSpeed(t *testing.T) {
 
 	start := time.Now()
 
+	wg := sync.WaitGroup{}
+
+	maxCalls := semaphore.NewWeighted(4)
+	ctx := context.Background()
+
 	for _, query := range queries {
-		_, err := provider.Search(query)
-		if err != nil {
-			t.Fatal(err)
-		}
+		wg.Add(1)
+
+		maxCalls.Acquire(ctx, 1)
+		go func(query string) {
+			defer wg.Done()
+			defer maxCalls.Release(1)
+
+			_, err := provider.Search(query)
+			if err != nil {
+				t.Fail()
+			}
+		}(query)
 	}
+
+	wg.Wait()
 
 	time_taken := time.Since(start)
 

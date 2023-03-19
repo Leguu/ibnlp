@@ -47,7 +47,7 @@ type ChatGPTResponse struct {
 	} `json:"usage"`
 }
 
-func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (string, error) {
+func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (ChatGPTResponse, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	if input.Model == "" {
@@ -56,12 +56,12 @@ func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (string, error) {
 
 	marshalled, err := json.Marshal(input)
 	if err != nil {
-		return "", err
+		return ChatGPTResponse{}, err
 	}
 
 	request, err := http.NewRequest(http.MethodPost, chatGPTURL, bytes.NewReader(marshalled))
 	if err != nil {
-		return "", err
+		return ChatGPTResponse{}, err
 	}
 
 	request.Header.Set("Authorization", "Bearer "+openAIKey)
@@ -69,7 +69,7 @@ func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (string, error) {
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return "", err
+		return ChatGPTResponse{}, err
 	}
 
 	decoder := json.NewDecoder(response.Body)
@@ -78,5 +78,5 @@ func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (string, error) {
 
 	decoder.Decode(&t)
 
-	return t.Choices[0].Message.Content, nil
+	return t, nil
 }

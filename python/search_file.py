@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import pickle
 import sys
-from typing import TypeVar
+from typing import Optional, TypeVar
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer, util, CrossEncoder
 from nltk.corpus import stopwords
@@ -27,7 +27,9 @@ CROSS_ENCODER = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 READY_CODE = "ready"
 STOP_CODE = "stop"
 
-DATA_DIR = r"./data"
+DATA_DIR = r"./data/output"
+
+CORPUS_PATH = os.path.join(DATA_DIR, "corpus.pkl")
 
 TOP_K = 64
 RETURN_LIMIT = 2
@@ -128,11 +130,13 @@ def flatten(list: list[list[T]]) -> list[T]:
 
 class SearchResult:
     file: str
-    page: int
+    page: Optional[int]
     match: str
     score: float
 
-    def __init__(self, file: str, page: int, match: str, score: float) -> None:
+    def __init__(
+        self, file: str, page: Optional[int], match: str, score: float
+    ) -> None:
         self.file = file
         self.page = page
         self.match = match
@@ -149,8 +153,8 @@ class Searcher:
         optimisedPassages = [entry.optimisedPassage for entry in entries]
         eprint("All passages: ", len(entries))
 
-        if os.path.isfile("./data/corpus.pkl"):
-            with open("./data/corpus.pkl", "rb") as pkl:
+        if os.path.isfile(CORPUS_PATH):
+            with open(CORPUS_PATH, "rb") as pkl:
                 self.corpus = pickle.load(pkl)
         else:
             corpus = BI_ENCODER.encode(
@@ -164,7 +168,7 @@ class Searcher:
 
             self.corpus = corpus
 
-            with open("./data/corpus.pkl", "wb") as pkl:
+            with open(CORPUS_PATH, "wb") as pkl:
                 pickle.dump(self.corpus, pkl)
 
     def getFileAndEntry(self, index: int) -> tuple[SearchFile, Entry]:

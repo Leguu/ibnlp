@@ -2,7 +2,7 @@ package search
 
 type SearchResult struct {
 	File  string
-	Page  int
+	Page  *int
 	Match string
 	Score float32
 }

@@ -15,6 +15,11 @@ const lorem: SearchResult = {
   response: "Lorem Ipsum Demet Ipsum Lorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet IpsumLorem Ipsum Demet Ipsum",
 };
 
+const listQuery = {
+  query: "OIAWJODJAWID",
+  response: `Sure! According to page 14 of the "Ideal Libraries" guide, the six effective library practices to energize learning and inquiry are:\n\n1. Curating: Librarians are responsible for curating information, which means selecting, organizing, and presenting information resources in a way that is accessible and relevant to learners.\n\n2. Caretaking: Librarians are caretakers of both content and people. They are responsible for preserving and maintaining the library's physical collections, and for providing a sup…ical reading and media literacy skills.\n\n5. Co-creating: Librarians are co-creators of information with the school and the wider community. They collaborate with learners, teachers, and the community to create and share new knowledge and resources.\n\n6. Challenging: Librarians challenge learners to seek appropriate information, to use sound methods of inquiry and research, and to question the information they find and use. They encourage critical thinking and independent learning.\n\nI hope that helps!`
+};
+
 export default function Home() {
   const [results, setResults] = useState<SearchResult[]>([]);
 
@@ -116,7 +121,7 @@ export default function Home() {
               </Callout>
             </div>
 
-            <Callout icon='chat' className='max-w-xl'>
+            <Callout icon='chat' className='max-w-xl whitespace-pre-wrap'>
               {result.response}
             </Callout>
           </>)}

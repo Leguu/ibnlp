@@ -24,6 +24,14 @@ type SearchRequest struct {
 	Query string `json:"query"`
 }
 
+func getContent(result search.SearchResult) string {
+	if result.Page == nil {
+		return fmt.Sprintf(`File "%s": """%s"""`, result.File, result.Match)
+	} else {
+		return fmt.Sprintf(`File "%s", page "%d": """%s"""`, result.File, *result.Page, result.Match)
+	}
+}
+
 func PostSearch(c echo.Context) error {
 	searcher := c.Get("search").(search.Searcher)
 
@@ -34,7 +42,13 @@ func PostSearch(c echo.Context) error {
 
 	results, err := searcher.Search(request.Query)
 	if err != nil {
-		return c.JSON(500, err)
+		log.Error().Err(err).Msg("error while searching")
+		return c.JSON(500, "An error occured while conducting your search, please try again later.")
+	}
+
+	if len(results) < 2 {
+		log.Error().Msg("search results returned less than 2 results")
+		return c.JSON(500, "An error occured while conducting your search, please try again later.")
 	}
 
 	openAiProvider := nlp.ChatGPTProvider{}
@@ -51,11 +65,11 @@ func PostSearch(c echo.Context) error {
 			},
 			{
 				Role:    "user",
-				Content: fmt.Sprintf(`File "%s", page "%d": """%s"""`, results[0].File, results[0].Page, results[0].Match),
+				Content: getContent(results[0]),
 			},
 			{
 				Role:    "user",
-				Content: fmt.Sprintf(`File "%s", page "%d": """%s"""`, results[0].File, results[0].Page, results[0].Match),
+				Content: getContent(results[1]),
 			},
 			{
 				Role:    "user",
@@ -66,18 +80,21 @@ func PostSearch(c echo.Context) error {
 
 	response, err := openAiProvider.GetResponse(chatRequest)
 	if err != nil {
-		log.Error().Err(err)
-		return c.JSON(500, "An error occured while conducting your search, please try again later~")
+		log.Error().Err(err).Msg("error while getting response from openai")
+		return c.JSON(500, "An error occured while getting a response from OpenAI, please try again later.")
 	}
+
+	stringResponse := response.Choices[0].Message.Content
 
 	log.Info().Str("query", request.Query).
 		Str("ip", c.RealIP()).
 		Str("match1", results[0].Match).
 		Str("match2", results[1].Match).
-		Str("reponse", response).
+		Int("tokens", response.Usage.TotalTokens).
+		Str("reponse", stringResponse).
 		Msg("executed search")
 
 	return c.JSON(200, map[string]string{
-		"response": response,
+		"response": stringResponse,
 	})
 }

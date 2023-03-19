@@ -1,19 +1,25 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"ibnlp/commands"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	err := godotenv.Load(".env", ".env.local")
+	file, err := os.OpenFile("log.json", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 	if err != nil {
-		log.Fatal("error loading .env file")
+		log.Fatal().Msg("error opening log file")
+	}
+	log.Logger = log.Output(file)
+
+	err = godotenv.Load(".env", ".env.local")
+	if err != nil {
+		log.Fatal().Msg("error loading .env file")
 	}
 
 	app := &cli.App{

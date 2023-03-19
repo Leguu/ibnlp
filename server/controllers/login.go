@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 var loginRoutes = []route{
@@ -37,6 +38,10 @@ func PostLogin(c echo.Context) error {
 
 	sess.Authenticated = true
 	sess.Save(c)
+
+	log.Info().
+		Str("ip", c.RealIP()).
+		Msg("User logged in")
 
 	return c.JSON(http.StatusOK, "Logged in")
 }

@@ -92,5 +92,7 @@ func ServerCommand(c *cli.Context) error {
 		serverPort = "8080"
 	}
 
+	e.IPExtractor = echo.ExtractIPFromRealIPHeader()
+
 	return e.Start(":" + serverPort)
 }

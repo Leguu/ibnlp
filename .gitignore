@@ -2,3 +2,4 @@
 data/
 *.local
 *.log
+log.json

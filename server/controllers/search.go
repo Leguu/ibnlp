@@ -2,8 +2,9 @@ package controllers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 
 	"ibnlp/search"
 	"ibnlp/server/nlp"
@@ -63,13 +64,18 @@ func PostSearch(c echo.Context) error {
 		},
 	}
 
-	log.Println("Making a request with " + fmt.Sprint(chatRequest.Words()) + " words")
-	log.Println(chatRequest)
-
 	response, err := openAiProvider.GetResponse(chatRequest)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Err(err)
+		return c.JSON(500, "An error occured while conducting your search, please try again later~")
 	}
+
+	log.Info().Str("query", request.Query).
+		Str("ip", c.RealIP()).
+		Str("match1", results[0].Match).
+		Str("match2", results[1].Match).
+		Str("reponse", response).
+		Msg("executed search")
 
 	return c.JSON(200, map[string]string{
 		"response": response,

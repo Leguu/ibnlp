@@ -29,7 +29,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer p.Close()
 
 	provider = p
 

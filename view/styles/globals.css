@@ -1,0 +1,29 @@
+@import "normalize.css";
+@import "@blueprintjs/core/lib/css/blueprint.css";
+@import "@blueprintjs/icons/lib/css/blueprint-icons.css";
+@import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+body,
+#__next {
+  background-color: black;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.bp4-portal .bp4-dialog-container {
+  @apply h-full sm:h-auto w-full;
+}
+
+.bp4-portal .bp4-dialog {
+  @apply h-full sm:h-auto w-full sm:w-auto;
+}
+
+.bp4-input[type="search"] {
+  @apply rounded-none;
+}

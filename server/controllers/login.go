@@ -26,7 +26,7 @@ func PostLogin(c echo.Context) error {
 	sess := c.Get("session").(middleware.SessionValues)
 
 	if sess.Authenticated {
-		return c.JSON(http.StatusOK, "Already logged in")
+		return c.String(http.StatusOK, "Already logged in")
 	}
 
 	var json struct {
@@ -35,7 +35,7 @@ func PostLogin(c echo.Context) error {
 	c.Bind(&json)
 
 	if json.Password != "aba2023" {
-		return c.JSON(http.StatusUnauthorized, "Incorrect password")
+		return c.String(http.StatusUnauthorized, "Incorrect password")
 	}
 
 	sess.Authenticated = true
@@ -45,7 +45,7 @@ func PostLogin(c echo.Context) error {
 		Str("ip", c.RealIP()).
 		Msg("User logged in")
 
-	return c.JSON(http.StatusOK, "Logged in")
+	return c.String(http.StatusOK, "Logged in")
 }
 
 func GetUser(c echo.Context) error {

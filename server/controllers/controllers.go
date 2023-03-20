@@ -34,7 +34,7 @@ func authenticatedRoute(handler echo.HandlerFunc) echo.HandlerFunc {
 		sess := c.Get("session").(middleware.SessionValues)
 
 		if !sess.Authenticated {
-			return c.JSON(http.StatusUnauthorized, "Not logged in")
+			return c.String(http.StatusUnauthorized, "Not logged in")
 		}
 
 		return handler(c)

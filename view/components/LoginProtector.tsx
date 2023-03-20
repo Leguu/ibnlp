@@ -35,7 +35,7 @@ export default function LoginProtector({ children }: Props) {
           setLoading(false);
           if (r.ok) setIsAuthenticated(true);
         })
-      , 1000);
+      , 0);
   }, []);
 
   const submit = () => {
@@ -95,12 +95,12 @@ export default function LoginProtector({ children }: Props) {
       {body}
     </Dialog>
 
-    {loading && (
+    {/* {loading && (
       <div className='flex h-full items-center justify-center'>
         <Spinner />
       </div>
-    )}
+    )} */}
 
-    {isAuthenticated && children}
+    {children}
   </>;
 }

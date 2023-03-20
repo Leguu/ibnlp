@@ -3,6 +3,8 @@ package controllers
 import (
 	"net/http"
 
+	"ibnlp/server/middleware"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -29,7 +31,7 @@ func SetUpRoutes(group *echo.Group) {
 
 func authenticatedRoute(handler echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		sess := GetSessionValues(c)
+		sess := c.Get("session").(middleware.SessionValues)
 
 		if !sess.Authenticated {
 			return c.JSON(http.StatusUnauthorized, "Not logged in")

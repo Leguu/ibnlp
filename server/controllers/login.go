@@ -3,6 +3,8 @@ package controllers
 import (
 	"net/http"
 
+	"ibnlp/server/middleware"
+
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -21,7 +23,7 @@ var loginRoutes = []route{
 }
 
 func PostLogin(c echo.Context) error {
-	sess := GetSessionValues(c)
+	sess := c.Get("session").(middleware.SessionValues)
 
 	if sess.Authenticated {
 		return c.JSON(http.StatusOK, "Already logged in")
@@ -47,7 +49,7 @@ func PostLogin(c echo.Context) error {
 }
 
 func GetUser(c echo.Context) error {
-	sess := GetSessionValues(c)
+	sess := c.Get("session").(middleware.SessionValues)
 
 	return c.JSON(http.StatusOK, sess)
 }

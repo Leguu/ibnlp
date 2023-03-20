@@ -21,6 +21,8 @@ export default function Home() {
 
   const [isSearching, setIsSearching] = useState(false);
 
+  const canSearch = searchValue.trim() !== '';
+
   const search = async () => {
     setIsSearching(true);
 
@@ -36,8 +38,9 @@ export default function Home() {
     setIsSearching(false);
 
     if (!result.ok) {
+      const errorMessage = await result.text();
       AppToaster?.show({
-        message: 'An error occurred while searching. Please try again later.',
+        message: errorMessage,
         intent: 'warning',
         icon: 'error'
       });
@@ -128,7 +131,7 @@ export default function Home() {
             disabled={isSearching}
             value={searchValue}
             onChange={e => setSearchValue(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && search()}
+            onKeyDown={e => (e.key === 'Enter' && canSearch) && search()}
           />
           {(advancedSearch) && (
             <InputGroup
@@ -137,7 +140,7 @@ export default function Home() {
               disabled={isSearching}
               value={chatSearchValue}
               onChange={e => setChatSearchValue(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && search()}
+              onKeyDown={e => (e.key === 'Enter' && canSearch) && search()}
               className='mt-1'
             />
           )}
@@ -145,7 +148,7 @@ export default function Home() {
       </div>
 
       <Button
-        disabled={searchValue.trim() === ''}
+        disabled={!canSearch}
         onClick={search}
         loading={isSearching}
         className='ml-2 h-min'

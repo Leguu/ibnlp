@@ -68,6 +68,7 @@ func RunServer(dev bool) error {
 
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 	e.Use(middleware.RegisterSearchMiddleware(searcher))
+	e.Use(middleware.RegisterSessionMiddleware())
 
 	development := os.Getenv("ENV") == "DEVELOPMENT" || dev
 

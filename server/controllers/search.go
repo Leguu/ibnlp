@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 
@@ -61,7 +62,7 @@ func PostSearch(c echo.Context) error {
 
 	var request SearchRequest
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(500, err)
+		return c.String(500, err.Error())
 	}
 
 	searchQuery := request.SearchQuery
@@ -69,19 +70,19 @@ func PostSearch(c echo.Context) error {
 		searchQuery = request.Query
 	}
 
-	if searchQuery == "" {
-		return c.JSON(http.StatusBadRequest, "Query cannot be empty.")
+	if strings.TrimSpace(searchQuery) == "" {
+		return c.String(http.StatusBadRequest, "Query cannot be empty.")
 	}
 
 	results, err := searcher.Search(searchQuery)
 	if err != nil {
 		log.Error().Err(err).Msg("error while searching")
-		return c.JSON(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
+		return c.String(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
 	}
 
 	if len(results) < 2 {
 		log.Error().Msg("search results returned less than 2 results")
-		return c.JSON(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
+		return c.String(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
 	}
 
 	openAiProvider := nlp.ChatGPTProvider{}
@@ -123,7 +124,7 @@ func PostSearch(c echo.Context) error {
 	response, err := openAiProvider.GetResponse(chatRequest)
 	if err != nil {
 		log.Error().Err(err).Msg("error while getting response from openai")
-		return c.JSON(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
+		return c.String(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
 	}
 
 	stringResponse := response.Choices[0].Message.Content

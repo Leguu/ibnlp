@@ -1,4 +1,4 @@
-package controllers
+package middleware
 
 import (
 	"github.com/labstack/echo-contrib/session"
@@ -9,7 +9,7 @@ type SessionValues struct {
 	Authenticated bool `json:"authenticated"`
 }
 
-func GetSessionValues(c echo.Context) SessionValues {
+func getSessionValues(c echo.Context) SessionValues {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		return SessionValues{}
@@ -29,4 +29,17 @@ func (values *SessionValues) Save(c echo.Context) error {
 	}
 	sess.Values["authenticated"] = values.Authenticated
 	return sess.Save(c.Request(), c.Response())
+}
+
+func RegisterSessionMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			values := getSessionValues(c)
+			c.Set("session", values)
+			if err := next(c); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
 }

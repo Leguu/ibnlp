@@ -20,6 +20,11 @@ type ChatGPTMessage struct {
 	Content string `json:"content"`
 }
 
+func (message *ChatGPTMessage) WordCount() int {
+	words := strings.Split(message.Content, " ")
+	return len(words)
+}
+
 type ChatGPTRequest struct {
 	Model    string           `json:"model"`
 	Messages []ChatGPTMessage `json:"messages"`

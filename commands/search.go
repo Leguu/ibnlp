@@ -1,15 +1,14 @@
 package commands
 
 import (
+	"ibnlp/search"
 	"log"
-
-	searchpython "ibnlp/search/python"
 
 	"github.com/urfave/cli/v2"
 )
 
 func SearchCommand(cli *cli.Context) error {
-	pythonProvider, err := searchpython.New()
+	pythonProvider, err := search.NewPythonSearcher()
 	if err != nil {
 		return err
 	}

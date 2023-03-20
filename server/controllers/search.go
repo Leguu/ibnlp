@@ -21,7 +21,9 @@ var searchRoutes = []route{
 }
 
 type SearchRequest struct {
-	Query       string `json:"query"`
+	Query string `json:"query"`
+	// SearchQuery is the query to be used for the search engine.
+	// If it's empty we use Query instead.
 	SearchQuery string `json:"searchQuery"`
 }
 
@@ -31,6 +33,27 @@ func getContent(result search.SearchResult) string {
 	} else {
 		return fmt.Sprintf(`File "%s", page "%d": """%s"""`, result.File, *result.Page, result.Match)
 	}
+}
+
+func getMessagesUpToWordLimit(results []search.SearchResult, wordLimit int) (messages []nlp.ChatGPTMessage) {
+	if wordLimit < 0 {
+		return messages
+	}
+
+	for _, result := range results {
+		wordLimit -= len(result.Match)
+
+		if wordLimit < 0 {
+			break
+		}
+
+		messages = append(messages, nlp.ChatGPTMessage{
+			Role:    "user",
+			Content: getContent(result),
+		})
+	}
+
+	return messages
 }
 
 func PostSearch(c echo.Context) error {
@@ -85,16 +108,12 @@ func PostSearch(c echo.Context) error {
 		},
 	}
 
-	for _, result := range results[2:] {
-		if chatRequest.Words() > 1000 {
-			break
-		}
+	results = results[2:]
 
-		chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
-			Role:    "user",
-			Content: getContent(result),
-		})
-	}
+	chatRequest.Messages = append(
+		chatRequest.Messages,
+		getMessagesUpToWordLimit(results, 1000-chatRequest.Words())...,
+	)
 
 	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
 		Role:    "user",

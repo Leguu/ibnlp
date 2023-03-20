@@ -1,40 +1,32 @@
-package searchpython
+package search
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
-
-	"ibnlp/search"
 )
 
 type PythonSearcher struct {
-	Command *exec.Cmd
-	Stdin   io.WriteCloser
 	Url     string
 }
 
-func New() (*PythonSearcher, error) {
-	port, err := strconv.Atoi(os.Getenv("PYTHON_SEARCH_SERVER_PORT"))
-	if err != nil {
-		return nil, err
+func NewPythonSearcher() (*PythonSearcher, error) {
+	port := os.Getenv("PYTHON_SEARCH_SERVER_PORT")
+	if port == "" {
+		return nil, errors.New("PYTHON_SEARCH_SERVER_PORT environment variable not set")
 	}
 
-	return &PythonSearcher{
-		Url: "http://localhost:" + strconv.Itoa(port) + "/",
-	}, nil
+	return &PythonSearcher{ Url: "http://localhost:" + port + "/", }, nil
 }
 
 func quote(s string) string {
 	return `"` + s + `"`
 }
 
-func (p *PythonSearcher) Search(query string) ([]search.SearchResult, error) {
+func (p *PythonSearcher) Search(query string) ([]SearchResult, error) {
 	query = quote(query)
 
 	response, err := http.Post(p.Url, "application/json", strings.NewReader(query+"\n"))
@@ -43,12 +35,12 @@ func (p *PythonSearcher) Search(query string) ([]search.SearchResult, error) {
 	}
 	defer response.Body.Close()
 
-	text, err := ioutil.ReadAll(response.Body)
+	text, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var searchResults []search.SearchResult
+	var searchResults []SearchResult
 
 	decoder := json.NewDecoder(strings.NewReader(string(text)))
 	if err := decoder.Decode(&searchResults); err != nil {

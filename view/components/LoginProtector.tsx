@@ -95,12 +95,6 @@ export default function LoginProtector({ children }: Props) {
       {body}
     </Dialog>
 
-    {/* {loading && (
-      <div className='flex h-full items-center justify-center'>
-        <Spinner />
-      </div>
-    )} */}
-
-    {children}
+    {isAuthenticated && children}
   </>;
 }

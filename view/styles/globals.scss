@@ -2,6 +2,7 @@
 @import "@blueprintjs/core/lib/css/blueprint.css";
 @import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 @import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
+@import "@blueprintjs/core/lib/scss/variables";
 
 @tailwind base;
 @tailwind components;
@@ -10,10 +11,20 @@
 :root,
 body,
 #__next {
-  background-color: black;
+  background-color: $pt-dark-app-background-color;
   height: 100%;
   width: 100%;
   overflow-x: hidden;
+}
+
+.rotating-dots {
+  background-image: url("/drawing.svg"), url("/nnnoise.svg");
+  background-size: 700px;
+  @screen md {
+    background-size: 1200px;
+  }
+  background-repeat: no-repeat, repeat;
+  background-position-x: center;
 }
 
 .bp4-portal .bp4-dialog-container {

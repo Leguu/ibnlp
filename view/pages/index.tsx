@@ -1,8 +1,6 @@
 import Navbar from '@/components/Navbar';
-import NavbarLayout from '@/components/NavbarLayout';
-import { Button, Callout, Divider, H1, H2, H6, Icon } from '@blueprintjs/core';
-import Link from 'next/link';
-import React, { ReactElement } from 'react';
+import { Callout, Divider } from '@blueprintjs/core';
+import React from 'react';
 
 export default function Start() {
   return <>
@@ -10,10 +8,10 @@ export default function Start() {
       <div className='h-screen rotating-dots'>
         <Navbar />
 
-        <div className='h-full flex flex-col items-center justify-center pb-20'>
+        <div className='h-full flex flex-col items-center justify-center'>
           <h1 className='text-4xl font-bold font-serif bg-yellow-400 text-slate-800 px-4 py-1'>Search.</h1>
 
-          <div className='pt-3 text-xl md:text-3xl lg:flex lg:space-x-3 font-sans font-light mb-20'>
+          <div className='pt-3 text-xl md:text-3xl lg:flex lg:space-x-3 font-sans font-light mb-12'>
             <h2 className='-skew-x-12'>Exactly what you mean.</h2>
             <h2 className='-skew-x-12'>Exactly how you meant it.</h2>
           </div>

@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"ibnlp/search"
+	"ibnlp/server/middleware"
 	"ibnlp/server/nlp"
 
 	"github.com/labstack/echo/v4"
@@ -57,8 +58,19 @@ func getMessagesUpToWordLimit(results []search.SearchResult, wordLimit int) (mes
 	return messages
 }
 
+const IB_PROMPT string = `You are an assistant for the International Baccalaureate organisation.
+				You will be given pages from IB files, and you must answer the user's query USING ONLY THE PAGES, or say 'I don't know' if you can't.
+				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
+				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
+
+const STANDARD_PROMPT string = `You are an assistant who has access to files.
+				You will be given pages from those files, and you must answer the user's query USING ONLY THE PAGES, or say 'I don't know' if you can't.
+				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
+				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
+
 func PostSearch(c echo.Context) error {
 	searcher := c.Get("search").(search.Searcher)
+	session := middleware.GetSessionValues(c)
 
 	var request SearchRequest
 	if err := c.Bind(&request); err != nil {
@@ -92,11 +104,8 @@ func PostSearch(c echo.Context) error {
 	chatRequest := nlp.ChatGPTRequest{
 		Messages: []nlp.ChatGPTMessage{
 			{
-				Role: "user",
-				Content: `You are an assistant for the International Baccalaureate organisation.
-				You will be given pages from IB files, and you must answer the user's query USING ONLY THE PAGES, or say 'I don't know' if you can't.
-				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
-				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`,
+				Role:    "user",
+				Content: STANDARD_PROMPT,
 			},
 			{
 				Role:    "user",
@@ -121,6 +130,7 @@ func PostSearch(c echo.Context) error {
 		Content: `Users query: """` + gptQuery + `"""`,
 	})
 
+	// TODO: Stream this
 	response, err := openAiProvider.GetResponse(chatRequest)
 	if err != nil {
 		log.Error().Err(err).Msg("error while getting response from openai")
@@ -130,7 +140,7 @@ func PostSearch(c echo.Context) error {
 	stringResponse := response.Choices[0].Message.Content
 
 	log.Info().Str("query", request.Query).
-		Str("ip", c.RealIP()).
+		Str("user", session.UserID).
 		Int("tokens", response.Usage.TotalTokens).
 		Str("reponse", stringResponse).
 		Msg("executed search")

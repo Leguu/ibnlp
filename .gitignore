@@ -4,3 +4,4 @@ data/
 *.log
 log.json
 *.code-workspace
+*.db

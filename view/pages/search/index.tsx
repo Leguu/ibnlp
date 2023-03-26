@@ -1,8 +1,8 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import LoginProtector from "@/components/LoginProtector";
-import { AppToaster } from '@/toaster';
 import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6 } from '@blueprintjs/core';
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
+import { AppToaster } from '@/utils/toaster';
 
 interface SearchResult {
   query: string;

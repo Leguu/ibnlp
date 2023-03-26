@@ -1,8 +1,8 @@
-@import "normalize.css";
-@import "@blueprintjs/core/lib/css/blueprint.css";
-@import "@blueprintjs/icons/lib/css/blueprint-icons.css";
-@import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
-@import "@blueprintjs/core/lib/scss/variables";
+@import 'normalize.css';
+@import '@blueprintjs/core/lib/css/blueprint.css';
+@import '@blueprintjs/icons/lib/css/blueprint-icons.css';
+@import '@blueprintjs/popover2/lib/css/blueprint-popover2.css';
+@import '@blueprintjs/core/lib/scss/variables';
 
 @tailwind base;
 @tailwind components;
@@ -17,8 +17,19 @@ body,
   overflow-x: hidden;
 }
 
+.favicon {
+  path {
+    fill: #000;
+  }
+  @media (prefers-color-scheme: dark) {
+    path {
+      fill: #fff;
+    }
+  }
+}
+
 .rotating-dots {
-  background-image: url("/drawing.svg"), url("/nnnoise.svg");
+  background-image: url('/drawing.svg'), url('/nnnoise.svg');
   background-size: 700px;
   @screen md {
     background-size: 1200px;
@@ -35,6 +46,6 @@ body,
   @apply h-full sm:h-auto w-full sm:w-auto;
 }
 
-.bp4-input[type="search"] {
+.bp4-input[type='search'] {
   @apply rounded-none;
 }

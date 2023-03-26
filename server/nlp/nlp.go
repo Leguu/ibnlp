@@ -27,6 +27,7 @@ func (message *ChatGPTMessage) WordCount() int {
 
 type ChatGPTRequest struct {
 	Model    string           `json:"model"`
+	Stream   bool             `json:"stream"`
 	Messages []ChatGPTMessage `json:"messages"`
 }
 
@@ -81,7 +82,9 @@ func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (ChatGPTResponse, err
 
 	var t ChatGPTResponse
 
-	decoder.Decode(&t)
+	if err := decoder.Decode(&t); err != nil {
+		return ChatGPTResponse{}, err
+	}
 
 	return t, nil
 }

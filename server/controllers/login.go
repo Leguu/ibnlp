@@ -1,12 +1,15 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"ibnlp/server/middleware"
+	"ibnlp/server/model"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 var loginRoutes = []route{
@@ -23,33 +26,40 @@ var loginRoutes = []route{
 }
 
 func PostLogin(c echo.Context) error {
-	sess := c.Get("session").(middleware.SessionValues)
+	sess := middleware.GetSessionValues(c)
+	db := c.Get("db").(*gorm.DB)
 
-	if sess.Authenticated {
+	if sess.UserID != "" {
 		return c.String(http.StatusOK, "Already logged in")
 	}
 
 	var json struct {
+		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 	c.Bind(&json)
 
-	if json.Password != "aba2023" {
+	var user model.User
+	if err := db.First(&user, "username = ?", json.Username).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		return c.String(http.StatusNotFound, "Username not found")
+	}
+
+	if user.Password != json.Password {
 		return c.String(http.StatusUnauthorized, "Incorrect password")
 	}
 
-	sess.Authenticated = true
+	sess.UserID = user.ID
 	sess.Save(c)
 
 	log.Info().
-		Str("ip", c.RealIP()).
+		Object("user", user).
 		Msg("User logged in")
 
 	return c.String(http.StatusOK, "Logged in")
 }
 
 func GetUser(c echo.Context) error {
-	sess := c.Get("session").(middleware.SessionValues)
+	sess := middleware.GetSessionValues(c)
 
 	return c.JSON(http.StatusOK, sess)
 }

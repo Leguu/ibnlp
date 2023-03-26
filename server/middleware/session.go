@@ -6,19 +6,19 @@ import (
 )
 
 type SessionValues struct {
-	Authenticated bool `json:"authenticated"`
+	UserID string
 }
 
-func getSessionValues(c echo.Context) SessionValues {
+func GetSessionValues(c echo.Context) SessionValues {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		return SessionValues{}
 	}
-	if sess.Values["authenticated"] == nil {
-		sess.Values["authenticated"] = false
+	if sess.Values["UserID"] == nil {
+		sess.Values["UserID"] = ""
 	}
 	return SessionValues{
-		Authenticated: sess.Values["authenticated"].(bool),
+		UserID: sess.Values["UserID"].(string),
 	}
 }
 
@@ -27,19 +27,6 @@ func (values *SessionValues) Save(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	sess.Values["authenticated"] = values.Authenticated
+	sess.Values["UserID"] = values.UserID
 	return sess.Save(c.Request(), c.Response())
-}
-
-func RegisterSessionMiddleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			values := getSessionValues(c)
-			c.Set("session", values)
-			if err := next(c); err != nil {
-				return err
-			}
-			return nil
-		}
-	}
 }

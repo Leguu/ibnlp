@@ -11,8 +11,10 @@ import (
 	"ibnlp/server/controllers"
 	"ibnlp/server/middleware"
 
+	"github.com/glebarez/sqlite"
 	"github.com/labstack/echo/v4"
 	eMiddleware "github.com/labstack/echo/v4/middleware"
+	"gorm.io/gorm"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -37,17 +39,13 @@ func runViewDevelopmentBuild() *exec.Cmd {
 	return cmd
 }
 
-func setUpDev(e *echo.Echo) {
+func setUpProxy(e *echo.Echo) {
 	developmentPort := os.Getenv("DEVELOPMENT_PORT")
 
 	target, err := url.Parse("http://localhost:" + developmentPort)
 	if err != nil {
 		panic("failed to parse development port. have you set the DEVELOPMENT_PORT environment variable?")
 	}
-
-	loggerConfig := eMiddleware.DefaultLoggerConfig
-	loggerConfig.Format = "${method} ${status} ${path} - ${query} ${error}\n"
-	e.Use(eMiddleware.LoggerWithConfig(loggerConfig))
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
 
@@ -57,7 +55,20 @@ func setUpDev(e *echo.Echo) {
 	})
 }
 
+func setUpDev(e *echo.Echo) {
+	loggerConfig := eMiddleware.DefaultLoggerConfig
+	loggerConfig.Format = "${method} ${status} ${path} - ${query} ${error}\n"
+	e.Use(eMiddleware.LoggerWithConfig(loggerConfig))
+
+	setUpProxy(e)
+}
+
 func RunServer(dev bool) error {
+	db, err := gorm.Open(sqlite.Open("ibnlp.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
 	e := echo.New()
 	e.Use(eMiddleware.Recover())
 
@@ -67,8 +78,8 @@ func RunServer(dev bool) error {
 	}
 
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
+	e.Use(middleware.RegisterDbMiddleware(db))
 	e.Use(middleware.RegisterSearchMiddleware(searcher))
-	e.Use(middleware.RegisterSessionMiddleware())
 
 	development := os.Getenv("ENV") == "DEVELOPMENT" || dev
 
@@ -81,7 +92,8 @@ func RunServer(dev bool) error {
 	} else {
 		// buildViewProductionBuild()
 		log.Println("Serving production build")
-		e.Static("/*", "./view/out")
+		setUpProxy(e)
+		// e.Static("/*", "./view/out")
 	}
 
 	e.Pre(eMiddleware.RemoveTrailingSlash())

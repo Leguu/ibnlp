@@ -28,6 +28,16 @@ body,
   }
 }
 
+.blinking {
+  animation: blinker 0.7s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
 .rotating-dots {
   background-image: url('/drawing.svg'), url('/nnnoise.svg');
   background-size: 700px;

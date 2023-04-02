@@ -22,10 +22,10 @@ func SearchCommand(cli *cli.Context) error {
 	// for _, result := range output {
 	// 	log.Println(result)
 	// }
-	
+
 	openAi := nlp.ChatGPTProvider{}
-	
-	response, err := openAi.GetResponse(nlp.ChatGPTRequest{
+
+	responses, err := openAi.GetResponse(nlp.ChatGPTRequest{
 		Messages: []nlp.ChatGPTMessage{
 			{Role: "user", Content: cli.Args().First()},
 		},
@@ -33,8 +33,11 @@ func SearchCommand(cli *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	
-	println(response.Choices[0].Message.Content)
+
+	for response := range responses {
+		print(response.Choices[0].Delta.Content)
+	}
+	println()
 
 	return nil
 }

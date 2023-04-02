@@ -70,7 +70,6 @@ const STANDARD_PROMPT string = `You are an assistant who has access to files.
 
 func PostSearch(c echo.Context) error {
 	searcher := c.Get("search").(search.Searcher)
-	session := middleware.GetSessionValues(c)
 
 	var request SearchRequest
 	if err := c.Bind(&request); err != nil {
@@ -96,8 +95,6 @@ func PostSearch(c echo.Context) error {
 		log.Error().Msg("search results returned less than 2 results")
 		return c.String(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
 	}
-
-	openAiProvider := nlp.ChatGPTProvider{}
 
 	gptQuery := request.Query
 
@@ -130,22 +127,36 @@ func PostSearch(c echo.Context) error {
 		Content: `Users query: """` + gptQuery + `"""`,
 	})
 
-	// TODO: Stream this
-	response, err := openAiProvider.GetResponse(chatRequest)
+	openAiProvider := nlp.ChatGPTProvider{}
+
+	responses, err := openAiProvider.GetResponse(chatRequest)
 	if err != nil {
 		log.Error().Err(err).Msg("error while getting response from openai")
 		return c.String(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
 	}
 
-	stringResponse := response.Choices[0].Message.Content
+	writer := c.Response().Writer
+	flusher := writer.(http.Flusher)
 
+	totalReponse := ""
+
+	for response := range responses {
+		stringResponse := response.Choices[0].Delta.Content
+		totalReponse += stringResponse
+
+		writer.Write([]byte(`data: "` + stringResponse + `"` + "\n"))
+
+		flusher.Flush()
+	}
+
+	writer.Write([]byte(`data: [DONE]` + "\n"))
+	flusher.Flush()
+
+	session := middleware.GetSessionValues(c)
 	log.Info().Str("query", request.Query).
 		Str("user", session.UserID).
-		Int("tokens", response.Usage.TotalTokens).
-		Str("reponse", stringResponse).
+		Str("reponse", totalReponse).
 		Msg("executed search")
 
-	return c.JSON(200, map[string]string{
-		"response": stringResponse,
-	})
+	return c.String(200, "")
 }

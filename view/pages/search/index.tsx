@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import LoginProtector from "@/components/LoginProtector";
 import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6 } from '@blueprintjs/core';
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
-import { AppToaster } from '@/utils/toaster';
+import { useRequests } from '@/utils/http';
 
 interface SearchResult {
   query: string;
@@ -14,6 +14,8 @@ const aiPrompt = 'AI prompt';
 const searchPrompt = 'Search files';
 
 export default function Home() {
+  const requests = useRequests();
+
   const [results, setResults] = useState<SearchResult[]>([]);
 
   const [searchValue, setSearchValue] = useState('');
@@ -26,38 +28,31 @@ export default function Home() {
   const search = async () => {
     setIsSearching(true);
 
-    const result = await fetch('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: chatSearchValue.trim() || searchValue,
-        searchQuery: chatSearchValue.trim() !== '' ? searchValue : undefined
-      })
+    const iterator = requests.stream('/search', {
+      query: chatSearchValue.trim() || searchValue,
+      searchQuery: chatSearchValue.trim() !== '' ? searchValue : undefined
     });
 
-    setIsSearching(false);
+    let text = "";
+    const resultsIndex = results.length;
 
-    if (!result.ok) {
-      const errorMessage = await result.text();
-      AppToaster?.show({
-        message: errorMessage,
-        intent: 'warning',
-        icon: 'error'
+    for await (const value of iterator) {
+      text += value;
+
+      setResults(results => {
+        const newResults = [...results];
+        newResults[resultsIndex] = {
+          query: searchValue,
+          chatQuery: chatSearchValue,
+          response: text
+        };
+        return newResults;
       });
-      return;
     }
 
-    const jsonResult = await result.json();
-
-    let searchResult: SearchResult = {
-      query: searchValue.trim(),
-      chatQuery: chatSearchValue.trim(),
-      response: jsonResult.response
-    };
-
-    setResults(r => [...r, searchResult]);
     setSearchValue('');
     setChatSearchValue('');
+    setIsSearching(false);
   };
 
   const ref = useRef<HTMLDivElement | null>(null);
@@ -167,7 +162,7 @@ export default function Home() {
       {results.length === 0 ? (welcomeCard) : (
         <div className="h-full overflow-y-auto space-y-2 md:px-2">
 
-          {results.map(result => <>
+          {results.map((result, index) => <>
             <div className='flex w-full justify-end'>
               <Callout icon='help' className='w-fit max-w-xl' intent='primary'>
                 <p>
@@ -181,8 +176,11 @@ export default function Home() {
               </Callout>
             </div>
 
-            <Callout icon='chat' className='max-w-xl whitespace-pre-wrap '>
+            <Callout icon='chat' className='max-w-xl whitespace-pre-wrap'>
               {result.response}
+              {(isSearching && index === results.length - 1) && (
+                <div className='inline-flex ml-1 h-3 w-2 bg-white blinking' />
+              )}
             </Callout>
           </>)}
           <div ref={ref} />

@@ -1,8 +1,10 @@
 package nlp
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -41,33 +43,32 @@ func (request *ChatGPTRequest) Words() int {
 }
 
 type ChatGPTResponse struct {
+	Id      string `json:"id"`
+	Object  string `json:"object"`
 	Choices []struct {
 		Index        int            `json:"index"`
-		Message      ChatGPTMessage `json:"message"`
-		FinishReason string         `json:"finish_reason"`
+		Delta        ChatGPTMessage `json:"delta"`
+		FinishReason *string        `json:"finish_reason"`
 	} `json:"choices"`
-	Usage struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		TotalTokens      int `json:"total_tokens"`
-	} `json:"usage"`
 }
 
-func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (ChatGPTResponse, error) {
+func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (<-chan ChatGPTResponse, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	if input.Model == "" {
 		input.Model = defaultModel
 	}
 
+	input.Stream = true
+
 	marshalled, err := json.Marshal(input)
 	if err != nil {
-		return ChatGPTResponse{}, err
+		return nil, err
 	}
 
 	request, err := http.NewRequest(http.MethodPost, chatGPTURL, bytes.NewReader(marshalled))
 	if err != nil {
-		return ChatGPTResponse{}, err
+		return nil, err
 	}
 
 	request.Header.Set("Authorization", "Bearer "+openAIKey)
@@ -75,16 +76,49 @@ func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (ChatGPTResponse, err
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return ChatGPTResponse{}, err
+		return nil, err
 	}
 
-	decoder := json.NewDecoder(response.Body)
+	reader := bufio.NewReader(response.Body)
 
-	var t ChatGPTResponse
+	out := make(chan ChatGPTResponse)
+	go func() {
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				log.Println("error while reading string: ", err)
+				close(out)
+				return
+			}
+			line = strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 
-	if err := decoder.Decode(&t); err != nil {
-		return ChatGPTResponse{}, err
-	}
+			if line == "" {
+				continue
+			}
 
-	return t, nil
+			decoder := json.NewDecoder(strings.NewReader(line))
+
+			var t ChatGPTResponse
+			if err := decoder.Decode(&t); err != nil {
+				log.Println("error while decoding: ", err)
+				continue
+			}
+
+			if len(t.Choices) == 0 {
+				log.Println("no choices in response: ", t)
+				continue
+			}
+
+			if t.Choices[0].FinishReason != nil {
+				out <- t
+				close(out)
+				response.Body.Close()
+				return
+			}
+
+			out <- t
+		}
+	}()
+
+	return out, nil
 }

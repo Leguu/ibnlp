@@ -8,6 +8,11 @@ search = "uvicorn python.search_file:app --port $PYTHON_SEARCH_SERVER_PORT --rel
 extract = "python ./python/extract.py"
 
 [packages]
+python-dotenv = "*"
+uvicorn = "*"
+starlette = "*"
+fitz = "*"
+pymupdf = "*"
 
 [dev-packages]
 sentence-transformers = "*"

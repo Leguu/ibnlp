@@ -28,6 +28,8 @@ DATA_DIR = r"./data/output"
 
 CORPUS_PATH = os.path.join(DATA_DIR, "corpus.pkl")
 
+ENABLE_CUDA = False
+
 TOP_K = 64
 RETURN_LIMIT = 2
 
@@ -73,7 +75,8 @@ def get_query_embeddings(query: str) -> Tensor:
         raise TypeError(
             "Expected query_embedding to be type Tensor, got: ", type(query_embedding)
         )
-    query_embedding.cuda()
+    if ENABLE_CUDA:
+        query_embedding.cuda()
 
     return query_embedding
 
@@ -121,7 +124,9 @@ class Searcher:
                 raise TypeError(
                     "Expected corpus to be type Tensor, got: ", type(corpus)
                 )
-            corpus.cuda()
+
+            if ENABLE_CUDA:
+                corpus.cuda()
 
             self.corpus = corpus
 
@@ -138,7 +143,8 @@ class Searcher:
 
     def search(self, query: str) -> list[SearchResult]:
         question_embedding = get_query_embeddings(query)
-        question_embedding = question_embedding.cuda()
+        if ENABLE_CUDA:
+            question_embedding = question_embedding.cuda()
         hits = util.semantic_search(
             question_embedding, self.corpus, top_k=TOP_K, score_function=util.dot_score
         )[0]

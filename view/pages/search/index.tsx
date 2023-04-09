@@ -111,7 +111,7 @@ export default function Home() {
                   </p>
                 </div>
               )}
-              renderTarget={({ ref, ...targetProps }) => (
+              renderTarget={({ isOpen, ref, ...targetProps }) => (
                 <Button minimal small icon='help' elementRef={ref} {...targetProps} />
               )}
             />
@@ -161,28 +161,29 @@ export default function Home() {
     <div className='flex flex-col h-full max-w-3xl ml-auto mr-auto md:py-4 p-2'>
       {results.length === 0 ? (welcomeCard) : (
         <div className="h-full overflow-y-auto space-y-2 md:px-2">
-
-          {results.map((result, index) => <>
-            <div className='flex w-full justify-end'>
-              <Callout icon='help' className='w-fit max-w-xl' intent='primary'>
-                <p>
-                  {result.query}
-                </p>
-                {result.chatQuery !== "" && (
+          {results.map((result, index) =>
+            <div key={index} className='space-y-2'>
+              <div className='flex w-full justify-end'>
+                <Callout icon='help' className='w-fit max-w-xl' intent='primary'>
                   <p>
-                    <b>{`${aiPrompt}: `}</b> {result.chatQuery}
+                    {result.query}
                   </p>
+                  {result.chatQuery !== "" && (
+                    <p>
+                      <b>{`${aiPrompt}: `}</b> {result.chatQuery}
+                    </p>
+                  )}
+                </Callout>
+              </div>
+
+              <Callout icon='chat' className='max-w-xl whitespace-pre-wrap'>
+                {result.response}
+                {(isSearching && index === results.length - 1) && (
+                  <div className='inline-flex ml-1 h-3 w-2 bg-white blinking' />
                 )}
               </Callout>
             </div>
-
-            <Callout icon='chat' className='max-w-xl whitespace-pre-wrap'>
-              {result.response}
-              {(isSearching && index === results.length - 1) && (
-                <div className='inline-flex ml-1 h-3 w-2 bg-white blinking' />
-              )}
-            </Callout>
-          </>)}
+          )}
           <div ref={ref} />
         </div>
       )}

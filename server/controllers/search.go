@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -22,18 +24,11 @@ var searchRoutes = []route{
 	},
 }
 
-type SearchRequest struct {
-	Query string `json:"query"`
-	// SearchQuery is the query to be used for the search engine.
-	// If it's empty we use Query instead.
-	SearchQuery string `json:"searchQuery"`
-}
-
 func getContent(result search.SearchResult) string {
 	if result.Page == nil {
-		return fmt.Sprintf(`File "%s": """%s"""`, result.File, result.Match)
+		return fmt.Sprintf(`Search File "%s": """%s"""`, result.File, result.Match)
 	} else {
-		return fmt.Sprintf(`File "%s", page "%d": """%s"""`, result.File, *result.Page, result.Match)
+		return fmt.Sprintf(`Search File "%s", page "%d": """%s"""`, result.File, *result.Page, result.Match)
 	}
 }
 
@@ -50,7 +45,7 @@ func getMessagesUpToWordLimit(results []search.SearchResult, wordLimit int) (mes
 		}
 
 		messages = append(messages, nlp.ChatGPTMessage{
-			Role:    "user",
+			Role:    "system",
 			Content: getContent(result),
 		})
 	}
@@ -68,64 +63,105 @@ const STANDARD_PROMPT string = `You are an assistant who has access to files.
 				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
 				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
 
-func PostSearch(c echo.Context) error {
-	searcher := c.Get("search").(search.Searcher)
+type Request struct {
+	Query string `json:"query"`
+	// SearchQuery is the query to be used for the search engine.
+	// If it's empty we use Query instead.
+	SearchQuery string `json:"searchQuery"`
+	History     []struct {
+		User      string `json:"user"`
+		Assistant string `json:"assistant"`
+	} `json:"history"`
+}
 
-	var request SearchRequest
-	if err := c.Bind(&request); err != nil {
-		return c.String(500, err.Error())
-	}
-
-	searchQuery := request.SearchQuery
-	if searchQuery == "" {
-		searchQuery = request.Query
-	}
-
-	if strings.TrimSpace(searchQuery) == "" {
-		return c.String(http.StatusBadRequest, "Query cannot be empty.")
-	}
-
-	results, err := searcher.Search(searchQuery)
-	if err != nil {
-		log.Error().Err(err).Msg("error while searching")
-		return c.String(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
-	}
-
-	if len(results) < 2 {
-		log.Error().Msg("search results returned less than 2 results")
-		return c.String(http.StatusInternalServerError, "An error occured while conducting your search, please try again later.")
-	}
-
-	gptQuery := request.Query
-
-	chatRequest := nlp.ChatGPTRequest{
+func constructGPTRequest(request Request, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
+	chatRequest = nlp.ChatGPTRequest{
 		Messages: []nlp.ChatGPTMessage{
 			{
-				Role:    "user",
+				Role:    "system",
 				Content: STANDARD_PROMPT,
-			},
-			{
-				Role:    "user",
-				Content: getContent(results[0]),
-			},
-			{
-				Role:    "user",
-				Content: getContent(results[1]),
 			},
 		},
 	}
-
-	results = results[2:]
 
 	chatRequest.Messages = append(
 		chatRequest.Messages,
 		getMessagesUpToWordLimit(results, 1000-chatRequest.Words())...,
 	)
 
+	for _, history := range request.History {
+		chatRequest.Messages = append(
+			chatRequest.Messages,
+			[]nlp.ChatGPTMessage{{
+				Role:    "user",
+				Content: history.User,
+			}, {
+				Role:    "assistant",
+				Content: history.Assistant,
+			}}...,
+		)
+	}
+
 	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
 		Role:    "user",
-		Content: `Users query: """` + gptQuery + `"""`,
+		Content: request.Query,
 	})
+
+	return chatRequest
+}
+
+func doSearch(searcher search.Searcher, searchQuery string) (results []search.SearchResult, err error) {
+	if strings.TrimSpace(searchQuery) == "" {
+		return nil, errors.New("The search query was empty")
+	}
+
+	results, err = searcher.Search(searchQuery)
+	if err != nil {
+		log.Error().Err(err).Msg("error while searching")
+		return nil, errors.New("An error occured while conducting your search, please try again later.")
+	}
+
+	return results, err
+}
+
+func writeResponse(writer io.Writer, responses <-chan nlp.ChatGPTResponse) string {
+	flusher := writer.(http.Flusher)
+	flusher.Flush()
+
+	totalResponse := ""
+
+	for response := range responses {
+		stringResponse := response.Choices[0].Delta.Content
+		totalResponse += stringResponse
+
+		io.WriteString(writer, "data: "+stringResponse+"\n\n")
+		flusher.Flush()
+	}
+
+	flusher.Flush()
+
+	return totalResponse
+}
+
+func PostSearch(c echo.Context) error {
+	response := c.Response()
+
+	var request Request
+	if err := c.Bind(&request); err != nil {
+		return c.String(http.StatusBadRequest, "An error occured while parsing your request, please contact your administrator.")
+	}
+
+	var results []search.SearchResult
+	if request.SearchQuery != "" {
+		searcher := c.Get("search").(search.Searcher)
+		var err error
+		results, err = doSearch(searcher, request.SearchQuery)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	chatRequest := constructGPTRequest(request, results)
 
 	openAiProvider := nlp.ChatGPTProvider{}
 
@@ -135,28 +171,13 @@ func PostSearch(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
 	}
 
-	writer := c.Response().Writer
-	flusher := writer.(http.Flusher)
-
-	totalReponse := ""
-
-	for response := range responses {
-		stringResponse := response.Choices[0].Delta.Content
-		totalReponse += stringResponse
-
-		writer.Write([]byte(`data: "` + stringResponse + `"` + "\n"))
-
-		flusher.Flush()
-	}
-
-	writer.Write([]byte(`data: [DONE]` + "\n"))
-	flusher.Flush()
+	totalResponse := writeResponse(response.Writer, responses)
 
 	session := middleware.GetSessionValues(c)
 	log.Info().Str("query", request.Query).
 		Str("user", session.UserID).
-		Str("reponse", totalReponse).
+		Str("response", totalResponse).
 		Msg("executed search")
 
-	return c.String(200, "")
+	return c.NoContent(http.StatusOK)
 }

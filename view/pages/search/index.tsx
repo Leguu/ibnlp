@@ -30,7 +30,11 @@ export default function Home() {
 
     const iterator = requests.stream('/search', {
       query: chatSearchValue.trim() || searchValue,
-      searchQuery: chatSearchValue.trim() !== '' ? searchValue : undefined
+      searchQuery: chatSearchValue.trim() !== '' ? searchValue : undefined,
+      history: results.map(result => ({
+        user: result.query,
+        assistant: result.response
+      }))
     });
 
     let text = "";

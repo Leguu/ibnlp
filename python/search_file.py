@@ -19,16 +19,21 @@ load_dotenv(".env")
 
 stop_words = set(stopwords.words("english"))
 
+ENABLE_CUDA = True
+
+if ENABLE_CUDA:
+    device = "cuda"
+else:
+    device = "cpu"
+
 # Available models: https://www.sbert.net/docs/pretrained_models.html
 EMBEDDER_NAME = "multi-qa-distilbert-dot-v1"
-BI_ENCODER = SentenceTransformer(EMBEDDER_NAME)
-CROSS_ENCODER = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+BI_ENCODER = SentenceTransformer(EMBEDDER_NAME, device=device)
+CROSS_ENCODER = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device=device)
 
 DATA_DIR = r"./data/output"
 
 CORPUS_PATH = os.path.join(DATA_DIR, "corpus.pkl")
-
-ENABLE_CUDA = False
 
 TOP_K = 64
 RETURN_LIMIT = 2

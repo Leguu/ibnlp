@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http/httputil"
 	"net/url"
@@ -20,23 +21,30 @@ import (
 	"github.com/labstack/echo-contrib/session"
 )
 
-func buildViewProductionBuild() {
-	cmd := exec.Command("npm", "run", "build")
+func runProductionClient() (*exec.Cmd, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cmd := exec.CommandContext(ctx, "npm", "run", "start")
 	cmd.Dir = "./view"
-	if err := cmd.Run(); err != nil {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
 		panic("failed to build frontend")
 	}
-	log.Println("Frontend built successfully")
+	log.Println("Frontend started")
+	return cmd, cancel
 }
 
-func runViewDevelopmentBuild() *exec.Cmd {
-	cmd := exec.Command("npm", "run", "dev")
+func runDevelopmentClient() (*exec.Cmd, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cmd := exec.CommandContext(ctx, "npm", "run", "dev")
 	cmd.Dir = "./view"
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
-	cmd.Start()
-	log.Println("Dev build started successfully")
-	return cmd
+	if err := cmd.Start(); err != nil {
+		panic("failed to build dev")
+	}
+	log.Println("Dev build started")
+	return cmd, cancel
 }
 
 func setUpProxy(e *echo.Echo) {
@@ -83,17 +91,16 @@ func RunServer(dev bool) error {
 
 	development := os.Getenv("ENV") == "DEVELOPMENT" || dev
 
-	// var developmentBuild *exec.Cmd
 	if development {
-		log.Println("Serving development build")
 		setUpDev(e)
-		// developmentBuild := runViewDevelopmentBuild()
-		// defer developmentBuild.Process.Kill()
+		// _, cancel := runDevelopmentClient()
+		// defer cancel()
+		log.Println("Serving development build")
 	} else {
-		// buildViewProductionBuild()
-		log.Println("Serving production build")
+		_, cancel := runProductionClient()
+		defer cancel()
 		setUpProxy(e)
-		// e.Static("/*", "./view/out")
+		log.Println("Serving production build")
 	}
 
 	e.Pre(eMiddleware.RemoveTrailingSlash())

@@ -67,19 +67,15 @@ export const useRequests = () => {
     let text = '';
 
     while (true) {
-      const { done, value } = await reader.read();
+      let { done, value } = await reader.read();
       if (done || value === undefined) break;
 
-      if (value.includes("data: [DONE]")) break;
+      value = value.replaceAll(/data: (.*)\n\n/g, '$1');
 
-      const values = value.split("\n")
-        .filter(v => v.startsWith("data: "))
-        .map(v => v.replace(/^data: "(.*)"$/, '$1'));
+      if (value === '') continue;
 
-      const joined = values.join('');
-
-      text += joined;
-      yield joined;
+      text += value;
+      yield value;
     }
 
     options?.onSuccess?.(text);

@@ -33,14 +33,14 @@ func getContent(result search.SearchResult) string {
 }
 
 func getMessagesUpToWordLimit(results []search.SearchResult, wordLimit int) (messages []nlp.ChatGPTMessage) {
-	if wordLimit < 0 {
+	if wordLimit <= 0 {
 		return messages
 	}
 
 	for _, result := range results {
 		wordLimit -= len(result.Match)
 
-		if wordLimit < 0 {
+		if wordLimit <= 0 {
 			break
 		}
 
@@ -75,13 +75,23 @@ type Request struct {
 }
 
 func constructGPTRequest(request Request, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
-	chatRequest = nlp.ChatGPTRequest{
-		Messages: []nlp.ChatGPTMessage{
-			{
-				Role:    "system",
-				Content: STANDARD_PROMPT,
-			},
-		},
+	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
+		Role:    "system",
+		Content: STANDARD_PROMPT,
+	})
+
+	if len(results) >= 2 {
+		chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
+			Role:    "system",
+			Content: getContent(results[0]),
+		})
+
+		chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
+			Role:    "system",
+			Content: getContent(results[1]),
+		})
+
+		results = results[2:]
 	}
 
 	chatRequest.Messages = append(
@@ -102,9 +112,14 @@ func constructGPTRequest(request Request, results []search.SearchResult) (chatRe
 		)
 	}
 
+	query := request.Query
+	if strings.TrimSpace(request.Query) == "" {
+		query = request.SearchQuery
+	}
+
 	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
 		Role:    "user",
-		Content: request.Query,
+		Content: query,
 	})
 
 	return chatRequest
@@ -143,6 +158,16 @@ func writeResponse(writer io.Writer, responses <-chan nlp.ChatGPTResponse) strin
 	return totalResponse
 }
 
+func resultsToString(results []search.SearchResult) string {
+	var sb strings.Builder
+
+	for _, result := range results {
+		sb.WriteString(result.Match)
+	}
+
+	return sb.String()
+}
+
 func PostSearch(c echo.Context) error {
 	response := c.Response()
 
@@ -177,6 +202,7 @@ func PostSearch(c echo.Context) error {
 	log.Info().Str("query", request.Query).
 		Str("user", session.UserID).
 		Str("response", totalResponse).
+		Str("results", resultsToString(results)).
 		Msg("executed search")
 
 	return c.NoContent(http.StatusOK)

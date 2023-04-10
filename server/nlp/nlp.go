@@ -104,7 +104,6 @@ func streamResponseToChannel(body io.ReadCloser, out chan<- ChatGPTResponse) {
 
 		if t.Choices[0].FinishReason != nil {
 			out <- t
-			close(out)
 			return
 		}
 

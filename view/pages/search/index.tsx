@@ -18,19 +18,19 @@ export default function Home() {
 
   const [results, setResults] = useState<SearchResult[]>([]);
 
-  const [searchValue, setSearchValue] = useState('');
-  const [chatSearchValue, setChatSearchValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [query, setQuery] = useState('');
 
   const [isSearching, setIsSearching] = useState(false);
 
-  const canSearch = searchValue.trim() !== '';
+  const canSearch = searchQuery.trim() !== '';
 
   const search = async () => {
     setIsSearching(true);
 
     const iterator = requests.stream('/search', {
-      query: chatSearchValue.trim() || searchValue,
-      searchQuery: chatSearchValue.trim() !== '' ? searchValue : undefined,
+      query,
+      searchQuery,
       history: results.map(result => ({
         user: result.query,
         assistant: result.response
@@ -46,16 +46,16 @@ export default function Home() {
       setResults(results => {
         const newResults = [...results];
         newResults[resultsIndex] = {
-          query: searchValue,
-          chatQuery: chatSearchValue,
+          query: searchQuery,
+          chatQuery: query,
           response: text
         };
         return newResults;
       });
     }
 
-    setSearchValue('');
-    setChatSearchValue('');
+    setSearchQuery('');
+    setQuery('');
     setIsSearching(false);
   };
 
@@ -84,7 +84,7 @@ export default function Home() {
   const [advancedSearch, _setAdvancedSearch] = useState(false);
   const setAdvancedSearch = (value: boolean) => {
     _setAdvancedSearch(value);
-    setChatSearchValue('');
+    setQuery('');
   };
 
   const searchBar = (
@@ -128,8 +128,8 @@ export default function Home() {
             leftIcon='search'
             placeholder={`${searchPrompt}...`}
             disabled={isSearching}
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => (e.key === 'Enter' && canSearch) && search()}
           />
           {(advancedSearch) && (
@@ -137,8 +137,8 @@ export default function Home() {
               type='search'
               placeholder={aiPrompt}
               disabled={isSearching}
-              value={chatSearchValue}
-              onChange={e => setChatSearchValue(e.target.value)}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
               onKeyDown={e => (e.key === 'Enter' && canSearch) && search()}
               className='mt-1'
             />

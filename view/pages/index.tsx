@@ -1,4 +1,4 @@
-import Navbar from '@/components/Navbar';
+import LandingNavbar from '@/components/LandingNavbar';
 import { Callout, Divider } from '@blueprintjs/core';
 import React from 'react';
 
@@ -6,7 +6,7 @@ export default function Start() {
   return <>
     <div className='pb-20'>
       <div className='h-screen rotating-dots'>
-        <Navbar />
+        <LandingNavbar />
 
         <div className='h-full flex flex-col items-center justify-center'>
           <h1 className='text-4xl font-bold font-serif bg-yellow-400 text-slate-800 px-4 py-1'>Search.</h1>

@@ -1,8 +1,8 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
-import LoginProtector from "@/components/LoginProtector";
 import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6 } from '@blueprintjs/core';
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
 import { useRequests } from '@/utils/http';
+import ApplicationLayout from '@/layouts/ApplicationLayout';
 
 interface SearchResult {
   query: string;
@@ -67,10 +67,10 @@ export default function Home() {
 
   const welcomeCard = (
     <div className="h-full flex items-center justify-center">
-      <Card className="max-w-md space-y-2">
+      <Card className="max-w-lg space-y-2">
         <H5>Welcome to Semantic Search!</H5>
 
-        <div>{"We've hooked up some IB documents to an "}
+        <div>{"We've hooked up some of your documents to an "}
           <Tooltip2 position="top" content="That's right, ChatGPT!" className={Classes.TOOLTIP_INDICATOR}>
             Artificial Intelligence
           </Tooltip2>
@@ -199,8 +199,8 @@ export default function Home() {
 
 Home.getLayout = (page: ReactNode) => {
   return (
-    <LoginProtector>
+    <ApplicationLayout pageName='Search'>
       {page}
-    </LoginProtector>
+    </ApplicationLayout>
   );
 };

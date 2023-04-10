@@ -2,7 +2,7 @@ import { Icon, Button, Divider, Navbar as BPNavbar, OverflowList } from "@bluepr
 import Link from "next/link";
 import React from "react";
 
-export default function Navbar() {
+export default function LandingNavbar() {
   return (
     <BPNavbar className='sticky h-12 max-w-7xl xl:mt-2 
         flex flex-row items-center
@@ -26,7 +26,7 @@ export default function Navbar() {
 
       <Divider className='h-6' />
 
-      <Link href='/search'>
+      <Link href='/portal'>
         <Button minimal rightIcon='log-in'>
           Access
         </Button>

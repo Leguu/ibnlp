@@ -31,6 +31,7 @@ func SetUpRoutes(group *echo.Group) {
 	enableRoutes(group.Group("/search"), searchRoutes)
 	enableRoutes(group.Group("/login"), loginRoutes)
 	enableRoutes(group.Group("/register"), registerRoutes)
+	enableRoutes(group.Group("/chat"), chatRoutes)
 }
 
 func authenticatedRoute(handler echo.HandlerFunc) echo.HandlerFunc {

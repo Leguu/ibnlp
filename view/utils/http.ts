@@ -70,7 +70,7 @@ export const useRequests = () => {
       let { done, value } = await reader.read();
       if (done || value === undefined) break;
 
-      value = value.replaceAll(/data: (.*)\n\n/g, '$1');
+      value = value.replaceAll(/data: (.*)\x1F\n\n/g, '$1');
 
       if (value === '') continue;
 

@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
@@ -32,15 +31,15 @@ func getContent(result search.SearchResult) string {
 	}
 }
 
-func getMessagesUpToWordLimit(results []search.SearchResult, wordLimit int) (messages []nlp.ChatGPTMessage) {
-	if wordLimit <= 0 {
+func getMessagesUpToCharacterLimit(results []search.SearchResult, charLimit int) (messages []nlp.ChatGPTMessage) {
+	if charLimit <= 0 {
 		return messages
 	}
 
 	for _, result := range results {
-		wordLimit -= len(result.Match)
+		charLimit -= len(result.Match)
 
-		if wordLimit <= 0 {
+		if charLimit <= 0 {
 			break
 		}
 
@@ -63,10 +62,8 @@ const STANDARD_PROMPT string = `You are an assistant who has access to files.
 				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
 				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
 
-type Request struct {
-	Query string `json:"query"`
-	// SearchQuery is the query to be used for the search engine.
-	// If it's empty we use Query instead.
+type SearchRequest struct {
+	Query       string `json:"query"`
 	SearchQuery string `json:"searchQuery"`
 	History     []struct {
 		User      string `json:"user"`
@@ -74,7 +71,7 @@ type Request struct {
 	} `json:"history"`
 }
 
-func constructGPTRequest(request Request, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
+func constructGPTSearchRequest(request SearchRequest, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
 	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
 		Role:    "system",
 		Content: STANDARD_PROMPT,
@@ -96,7 +93,7 @@ func constructGPTRequest(request Request, results []search.SearchResult) (chatRe
 
 	chatRequest.Messages = append(
 		chatRequest.Messages,
-		getMessagesUpToWordLimit(results, 1000-chatRequest.Words())...,
+		getMessagesUpToCharacterLimit(results, 1000-chatRequest.Characters())...,
 	)
 
 	for _, history := range request.History {
@@ -139,25 +136,6 @@ func doSearch(searcher search.Searcher, searchQuery string) (results []search.Se
 	return results, err
 }
 
-func writeResponse(writer io.Writer, responses <-chan nlp.ChatGPTResponse) string {
-	flusher := writer.(http.Flusher)
-	flusher.Flush()
-
-	totalResponse := ""
-
-	for response := range responses {
-		stringResponse := response.Choices[0].Delta.Content
-		totalResponse += stringResponse
-
-		io.WriteString(writer, "data: "+stringResponse+"\n\n")
-		flusher.Flush()
-	}
-
-	flusher.Flush()
-
-	return totalResponse
-}
-
 func resultsToString(results []search.SearchResult) string {
 	var sb strings.Builder
 
@@ -171,7 +149,7 @@ func resultsToString(results []search.SearchResult) string {
 func PostSearch(c echo.Context) error {
 	response := c.Response()
 
-	var request Request
+	var request SearchRequest
 	if err := c.Bind(&request); err != nil {
 		return c.String(http.StatusBadRequest, "An error occured while parsing your request, please contact your administrator.")
 	}
@@ -186,7 +164,7 @@ func PostSearch(c echo.Context) error {
 		}
 	}
 
-	chatRequest := constructGPTRequest(request, results)
+	chatRequest := constructGPTSearchRequest(request, results)
 
 	openAiProvider := nlp.ChatGPTProvider{}
 
@@ -196,7 +174,7 @@ func PostSearch(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
 	}
 
-	totalResponse := writeResponse(response.Writer, responses)
+	totalResponse := nlp.StreamResponsesToWriter(response.Writer, responses)
 
 	session := middleware.GetSessionValues(c)
 	log.Info().Str("query", request.Query).

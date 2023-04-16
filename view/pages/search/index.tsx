@@ -3,6 +3,7 @@ import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6 } from '@
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
 import { useRequests } from '@/utils/http';
 import ApplicationLayout from '@/layouts/ApplicationLayout';
+import { Page } from '../_app';
 
 interface SearchResult {
   query: string;
@@ -13,7 +14,7 @@ interface SearchResult {
 const aiPrompt = 'AI prompt';
 const searchPrompt = 'Search files';
 
-export default function Home() {
+const Home: Page = () => {
   const requests = useRequests();
 
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -197,6 +198,7 @@ export default function Home() {
   );
 };
 
+Home.authenticated = true;
 Home.getLayout = (page: ReactNode) => {
   return (
     <ApplicationLayout pageName='Search'>
@@ -204,3 +206,5 @@ Home.getLayout = (page: ReactNode) => {
     </ApplicationLayout>
   );
 };
+
+export default Home;

@@ -34,7 +34,7 @@ type ChatGPTRequest struct {
 	Messages []ChatGPTMessage `json:"messages"`
 }
 
-func (request *ChatGPTRequest) Words() int {
+func (request *ChatGPTRequest) Characters() int {
 	words := 0
 	for _, message := range request.Messages {
 		line := strings.Split(message.Content, " ")
@@ -70,6 +70,24 @@ func makeRequest(input ChatGPTRequest) (*http.Response, error) {
 	request.Header.Set("Content-Type", "application/json")
 
 	return http.DefaultClient.Do(request)
+}
+
+// Will stream all response in the channel into the writer in event-stream format,
+// with each response separated by a \x1F character.
+func StreamResponsesToWriter(writer io.Writer, responses <-chan ChatGPTResponse) string {
+	flusher := writer.(http.Flusher)
+
+	totalResponse := ""
+
+	for response := range responses {
+		stringResponse := response.Choices[0].Delta.Content
+		totalResponse += stringResponse
+
+		io.WriteString(writer, "data: "+stringResponse+"\x1F\n\n")
+		flusher.Flush()
+	}
+
+	return totalResponse
 }
 
 func streamResponseToChannel(body io.ReadCloser, out chan<- ChatGPTResponse) {

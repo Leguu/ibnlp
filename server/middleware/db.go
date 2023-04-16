@@ -9,6 +9,7 @@ import (
 
 func migrateDb(db *gorm.DB) {
 	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.Organisation{})
 }
 
 func RegisterDbMiddleware(db *gorm.DB) func(echo.HandlerFunc) echo.HandlerFunc {

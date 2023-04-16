@@ -3,8 +3,9 @@ import ApplicationLayout from '@/layouts/ApplicationLayout';
 import { Card, H5 } from '@blueprintjs/core';
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import { Page } from '../_app';
 
-export default function PortalPage() {
+const PortalPage: Page = () => {
   return (
     <div className='max-w-3xl mx-auto flex flex-wrap space-y-3 p-4 space-x-3 justify-center'>
 
@@ -36,8 +37,9 @@ export default function PortalPage() {
 
     </div>
   );
-}
+};
 
+PortalPage.authenticated = true;
 PortalPage.getLayout = (page: ReactNode) => {
   return (
     <ApplicationLayout pageName='Portal'>
@@ -45,3 +47,5 @@ PortalPage.getLayout = (page: ReactNode) => {
     </ApplicationLayout>
   );
 };
+
+export default PortalPage;

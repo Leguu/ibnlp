@@ -7,7 +7,7 @@ interface Props extends ApplicationNavbarProps {
 
 export default function ApplicationLayout({ children, ...navbarProps }: Props) {
   return (
-    <LoginProtector>
+    <>
       <ApplicationNavbar {...navbarProps} />
 
       <div style={{
@@ -15,6 +15,6 @@ export default function ApplicationLayout({ children, ...navbarProps }: Props) {
       }}>
         {children}
       </div>
-    </LoginProtector>
+    </>
   );
 }

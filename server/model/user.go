@@ -3,9 +3,10 @@ package model
 import "github.com/rs/zerolog"
 
 type User struct {
-	ID       string `json:"id" gorm:"uniqueIndex"`
-	Username string
-	Password string
+	ID            string `json:"id" gorm:"uniqueIndex"`
+	Username      string
+	Password      string
+	Organisations []Organisation `gorm:"many2many:organisation_users;"`
 }
 
 func (user User) MarshalZerologObject(e *zerolog.Event) {

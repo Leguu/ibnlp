@@ -2,11 +2,11 @@ import ApplicationLayout from '@/layouts/ApplicationLayout';
 import { Page } from '../_app';
 import { Button, Card, Classes, Dialog, DialogBody, FormGroup, InputGroup, TreeNodeInfo } from '@blueprintjs/core';
 import { useState } from 'react';
-import { SyllabusContentCard, filterSelectedNodesTree, syllabus, syllabusToTree } from './SyllabusContentCard';
-import { SubjectAimsCard } from './SubjectAimsCard';
-import { KeyConceptsCard } from './KeyConceptsCard';
-import { ContextsOfInterestCard } from './ContextsOfInterestCard';
+import { ContextsOfInterestCard } from '../../components/UnitPlanner/ContextsOfInterestCard';
 import { useRequests } from '@/utils/http';
+import { KeyConceptsCard } from '@/components/UnitPlanner/KeyConceptsCard';
+import { SubjectAimsCard } from '@/components/UnitPlanner/SubjectAimsCard';
+import { syllabusToTree, syllabus, filterSelectedNodesTree, SyllabusContentCard } from '@/components/UnitPlanner/SyllabusContentCard';
 
 type ChatRequest = {
   query: string;

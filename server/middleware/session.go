@@ -6,7 +6,9 @@ import (
 )
 
 type SessionValues struct {
-	UserID string
+	UserID             string
+	OauthState         string
+	AccessCodeVerified bool
 }
 
 func GetSessionValues(c echo.Context) SessionValues {
@@ -17,8 +19,16 @@ func GetSessionValues(c echo.Context) SessionValues {
 	if sess.Values["UserID"] == nil {
 		sess.Values["UserID"] = ""
 	}
+	if sess.Values["OauthState"] == nil {
+		sess.Values["OauthState"] = ""
+	}
+	if sess.Values["AccessCodeVerified"] == nil {
+		sess.Values["AccessCodeVerified"] = false
+	}
 	return SessionValues{
-		UserID: sess.Values["UserID"].(string),
+		UserID:             sess.Values["UserID"].(string),
+		OauthState:         sess.Values["OauthState"].(string),
+		AccessCodeVerified: sess.Values["AccessCodeVerified"].(bool),
 	}
 }
 
@@ -28,5 +38,7 @@ func (values *SessionValues) Save(c echo.Context) error {
 		return err
 	}
 	sess.Values["UserID"] = values.UserID
+	sess.Values["OauthState"] = values.OauthState
+	sess.Values["AccessCodeVerified"] = values.AccessCodeVerified
 	return sess.Save(c.Request(), c.Response())
 }

@@ -3,6 +3,7 @@ import '@/styles/globals.scss';
 import { Classes, Colors } from '@blueprintjs/core';
 import { NextPage } from 'next';
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 import { ReactElement, ReactNode } from 'react';
 
 export type Page<P = {}, IP = P> = NextPage<P, IP> & {
@@ -23,8 +24,13 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     </LoginProtector>
   ) : page;
 
-  return (
+  return <>
+    <Head>
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"></meta>
+      <link rel="icon" href="/favicon.svg" className='favicon' style={{ fill: 'white' }} />
+    </Head>
     <div className={`${Classes.DARK}`}>
+
       {getLayout(<>
         {makeAuthenticated(
           <Component {...pageProps} />
@@ -35,5 +41,5 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         Pre-Alpha Build
       </div>
     </div>
-  );
+  </>;
 }

@@ -1,59 +1,122 @@
 package controllers
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
+	"ibnlp/server/middleware"
+	"ibnlp/server/model"
+
 	"github.com/labstack/echo/v4"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"gorm.io/gorm"
 )
 
-var oauthRoutes = []route{
+var googleOauthRoutes = []route{
 	{
-		"redirect",
-		http.MethodPost,
-		PostRedirect,
+		"/login",
+		http.MethodGet,
+		GoogleLogin,
+	},
+	{
+		"/callback",
+		http.MethodGet,
+		GoogleCallback,
 	},
 }
 
-type OAuthAccessResponse struct {
-	AccessToken string `json:"access_token"`
-}
-
-func googleAuthUrl(clientId, redirectUri, scope, state string) string {
-	if scope == "" {
-		scope = "openid email"
+func getGoogleOauthConfig() *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		RedirectURL:  "http://localhost:8080/api/oauth/google/callback",
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+		Endpoint: google.Endpoint,
 	}
-	return fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&scope=%s&response_type=code&state=%s", clientId, redirectUri, scope, state)
 }
 
-func PostRedirect(c echo.Context) error {
+func generateStateOauthCookie() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	state := base64.URLEncoding.EncodeToString(b)
+
+	return state
+}
+
+func GoogleLogin(c echo.Context) error {
+	sess := middleware.GetSessionValues(c)
+	sess.OauthState = generateStateOauthCookie()
+	sess.Save(c)
+
+	googleOauthConfig := getGoogleOauthConfig()
+
+	authCodeUrl := googleOauthConfig.AuthCodeURL(sess.OauthState)
+	return c.Redirect(http.StatusTemporaryRedirect, authCodeUrl)
+}
+
+type GoogleUser struct {
+	Email         string `json:"email"`
+	FamilyName    string `json:"family_name"`
+	GivenName     string `json:"given_name"`
+	ID            string `json:"id"`
+	Locale        string `json:"locale"`
+	Name          string `json:"name"`
+	Picture       string `json:"picture"`
+	VerifiedEmail bool   `json:"verified_email"`
+}
+
+func GoogleCallback(c echo.Context) error {
 	code := c.FormValue("code")
 
-	clientId := os.Getenv("GOOGLE_CLIENT_ID")
-	url := googleAuthUrl(clientId, "http://localhost:8080/oauth/redirect", "", code)
+	sess := middleware.GetSessionValues(c)
 
-	httpClient := http.Client{}
-	loginReq, err := http.NewRequest(http.MethodGet, url, nil)
+	if c.FormValue("state") != sess.OauthState {
+		return c.String(http.StatusUnauthorized, "Invalid state")
+	}
+
+	googleOauthConfig := getGoogleOauthConfig()
+
+	token, err := googleOauthConfig.Exchange(c.Request().Context(), code)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "could not create HTTP request: %v", err)
-		return c.NoContent(http.StatusBadRequest)
+		return c.String(http.StatusUnauthorized, "Could not get token")
 	}
+	client := googleOauthConfig.Client(oauth2.NoContext, token)
 
-	loginReq.Header.Set("accept", "application/json")
-
-	res, err := httpClient.Do(loginReq)
+	userInfo, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "could not send HTTP request: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
+		return c.String(http.StatusUnauthorized, "Could not get user info")
 	}
 
-	var t OAuthAccessResponse
-	if err := json.NewDecoder(res.Body).Decode(&t); err != nil {
-		fmt.Fprintf(os.Stdout, "could not parse JSON response: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
+	var data GoogleUser
+	decoder := json.NewDecoder(userInfo.Body)
+	decoder.Decode(&data)
+
+	if data.Email == "" || data.Name == "" {
+		return c.String(http.StatusUnauthorized, "Could not get user info")
 	}
 
-	return c.Redirect(http.StatusFound, "/?token="+t.AccessToken)
+	db := c.Get("db").(*gorm.DB)
+
+	var user model.User
+	if err := db.First(&user, "username = ?", data.Email).Error; err != nil {
+		user = model.User{
+			Username: data.Email,
+			Name:     data.Name,
+		}
+		if err := db.Create(&user).Error; err != nil {
+			return c.String(http.StatusUnauthorized, "Error creating user")
+		}
+	}
+
+	sess.UserID = user.ID
+	sess.Save(c)
+
+	return c.Redirect(http.StatusTemporaryRedirect, "/portal")
 }

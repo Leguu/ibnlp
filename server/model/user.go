@@ -4,6 +4,7 @@ import "github.com/rs/zerolog"
 
 type User struct {
 	ID            string `json:"id" gorm:"uniqueIndex"`
+	Name          string
 	Username      string
 	Password      string
 	Organisations []Organisation `gorm:"many2many:organisation_users;"`

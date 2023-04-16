@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"ibnlp/server/middleware"
 	"ibnlp/server/model"
 
 	"github.com/google/uuid"
@@ -18,21 +19,47 @@ var registerRoutes = []route{
 		http.MethodPost,
 		postRegister,
 	},
+	{
+		"/access",
+		http.MethodPost,
+		PostAccess,
+	},
+}
+
+func PostAccess(c echo.Context) error {
+	sess := middleware.GetSessionValues(c)
+
+	if sess.AccessCodeVerified {
+		return c.NoContent(http.StatusOK)
+	}
+
+	var json struct {
+		AuthCode string `json:"auth_code"`
+	}
+	c.Bind(&json)
+
+	if json.AuthCode == "semantic2023" {
+		sess.AccessCodeVerified = true
+		sess.Save(c)
+		return c.NoContent(http.StatusOK)
+	} else {
+		return c.String(http.StatusUnauthorized, "That access code is not valid")
+	}
 }
 
 func postRegister(c echo.Context) error {
 	db := c.Get("db").(*gorm.DB)
+	sess := middleware.GetSessionValues(c)
+
+	if !sess.AccessCodeVerified {
+		return c.String(http.StatusUnauthorized, "You must verify your access code first")
+	}
 
 	var json struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
-		AuthCode string `json:"authCode"`
 	}
 	c.Bind(&json)
-
-	if json.AuthCode != "semantic2023" {
-		return c.String(http.StatusUnauthorized, "That access code is not valid")
-	}
 
 	exists := db.First(&model.User{}, "username = ?", json.Username).RowsAffected > 0
 	if exists {

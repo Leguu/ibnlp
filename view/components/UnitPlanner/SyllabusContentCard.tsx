@@ -128,19 +128,20 @@ export const SyllabusContentCard = ({ tree, setTree }: {
     setTree(cloneTree);
   };
 
-  // const newNode: Partial<TreeNodeInfo> = {
-  //   label: (
-  //     <div className='flex flex-row items-center'>
-  //       <Button icon='minus' onClick={() => deselectNodeById(node.id as string, tree)} minimal />
-  //       <p className='ml-2 text-ellipsis overflow-hidden'>{node.label}</p>
-  //     </div>
-  //   ),
-  //   isExpanded: true,
-  //   isSelected: false,
-  // };
+  const mapNode = (node: TreeNodeInfo): TreeNodeInfo => ({
+    ...node,
+    childNodes: node.childNodes?.map(mapNode),
+    isSelected: false,
+    label: !node.childNodes ? (
+      <div className='flex flex-row items-center'>
+        <Button icon='minus' onClick={() => deselectNodeById(node.id as string, tree)} minimal />
+        <p className='ml-2 text-ellipsis overflow-hidden'>{node.label}</p>
+      </div>
+    ) : node.label
+  });
 
-
-  const filteredTree = filterSelectedNodesTree(tree);
+  const filteredTree = filterSelectedNodesTree(tree)
+    .map(mapNode);
 
   return (
     <Card>

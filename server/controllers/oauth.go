@@ -30,10 +30,16 @@ var googleOauthRoutes = []route{
 }
 
 func getGoogleOauthConfig() *oauth2.Config {
+	var redirectURL string
+	if os.Getenv("ENVIRONMENT") == "DEV" {
+		redirectURL = "http://localhost:8080/api/oauth/google/callback"
+	} else {
+		redirectURL = "https://semanticinquiry.com/api/oauth/google/callback"
+	}
 	return &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/api/oauth/google/callback",
+		RedirectURL:  redirectURL,
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",

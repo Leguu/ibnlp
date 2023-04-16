@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { useRouter } from 'next/router';
 import { useCallback, useMemo } from 'react';
 import { AppToaster } from './toaster';
+import { json } from 'stream/consumers';
 
 const apiPath = '/api';
 
@@ -70,9 +71,16 @@ export const useRequests = () => {
       let { done, value } = await reader.read();
       if (done || value === undefined) break;
 
-      value = value.replaceAll(/data: (.*)\x1F\n\n/g, '$1');
+      const values = value
+        .split('\n\n')
+        .map(s => s.trim())
+        .map(v => v.replaceAll(/data: (.*)/g, '$1'))
+        .filter(v => v.length > 0)
+        .map(v => JSON.parse(v));
 
-      if (value === '') continue;
+      value = values.join('');
+
+      if (!value) continue;
 
       text += value;
       yield value;

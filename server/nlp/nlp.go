@@ -83,7 +83,12 @@ func StreamResponsesToWriter(writer io.Writer, responses <-chan ChatGPTResponse)
 		stringResponse := response.Choices[0].Delta.Content
 		totalResponse += stringResponse
 
-		io.WriteString(writer, "data: "+stringResponse+"\x1F\n\n")
+		stringBuilder := strings.Builder{}
+		encoder := json.NewEncoder(&stringBuilder)
+
+		encoder.Encode(stringResponse)
+
+		io.WriteString(writer, "data: "+stringBuilder.String()+"\n\n")
 		flusher.Flush()
 	}
 
@@ -121,8 +126,11 @@ func streamResponseToChannel(body io.ReadCloser, out chan<- ChatGPTResponse) {
 		}
 
 		if t.Choices[0].FinishReason != nil {
-			out <- t
 			return
+		}
+
+		if t.Choices[0].Delta.Content == "" {
+			continue
 		}
 
 		out <- t

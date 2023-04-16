@@ -24,7 +24,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   ) : page;
 
   return (
-    <div className={`${Classes.DARK} h-full`}>
+    <div className={`${Classes.DARK}`}>
       {getLayout(<>
         {makeAuthenticated(
           <Component {...pageProps} />

@@ -16,7 +16,7 @@ var chatRoutes = []route{
 	{
 		"",
 		http.MethodPost,
-		authenticatedRoute(PostSearch),
+		authenticatedRoute(PostChat),
 	},
 }
 

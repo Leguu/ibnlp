@@ -27,13 +27,13 @@ export default function ApplicationNavbar({ pageName }: ApplicationNavbarProps) 
 
       <div className='flex-grow' />
 
-      <Link href='/teacher' className="hidden md:block">
+      {/* <Link href='/teacher' className="hidden md:block">
         <Button minimal>Teacher Portal</Button>
       </Link>
 
       <Link href='/search' className="hidden md:block">
         <Button minimal>Search</Button>
-      </Link>
+      </Link> */}
     </BPNavbar>
   );
 }

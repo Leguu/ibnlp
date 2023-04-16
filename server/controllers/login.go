@@ -61,9 +61,5 @@ func PostLogin(c echo.Context) error {
 func GetUser(c echo.Context) error {
 	sess := middleware.GetSessionValues(c)
 
-	if sess.UserID == "" {
-		return c.String(http.StatusUnauthorized, "You must be logged in to view this page")
-	}
-
 	return c.JSON(http.StatusOK, sess)
 }

@@ -5,3 +5,4 @@ data/
 log.json
 *.code-workspace
 *.db
+*.exe

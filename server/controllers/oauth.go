@@ -32,7 +32,7 @@ var googleOauthRoutes = []route{
 
 func getGoogleOauthConfig() *oauth2.Config {
 	var redirectURL string
-	if os.Getenv("ENVIRONMENT") == "DEV" {
+	if os.Getenv("ENV") == "DEVELOPMENT" {
 		redirectURL = "http://localhost:8080/api/oauth/google/callback"
 	} else {
 		redirectURL = "https://semanticinquiry.com/api/oauth/google/callback"
@@ -113,6 +113,9 @@ func GoogleCallback(c echo.Context) error {
 
 	var user model.User
 	if err := db.First(&user, "username = ?", data.Email).Error; err != nil {
+		if !sess.AccessCodeVerified {
+			return c.String(http.StatusUnauthorized, "Access code not verified")
+		}
 		user = model.User{
 			ID:       uuid.New().String(),
 			Username: data.Email,
@@ -121,6 +124,9 @@ func GoogleCallback(c echo.Context) error {
 		if err := db.Create(&user).Error; err != nil {
 			return c.String(http.StatusUnauthorized, "Error creating user")
 		}
+	} else {
+		sess.AccessCodeVerified = true
+		sess.Save(c)
 	}
 
 	sess.UserID = user.ID

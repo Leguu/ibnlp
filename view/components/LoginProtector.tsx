@@ -1,14 +1,17 @@
 import { useRequests } from '@/utils/http';
 import wait from '@/utils/wait';
-import { Button, Classes, Dialog, DialogBody, FormGroup, InputGroup, Spinner } from "@blueprintjs/core";
+import { Button, Classes, Dialog, DialogBody, Divider, FormGroup, InputGroup, Spinner } from "@blueprintjs/core";
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React, { useEffect, useState } from "react";
+import { GoogleLoginButton } from 'react-social-login-buttons';
 
 interface Props {
   children: React.ReactNode;
 }
 
 export default function LoginProtector({ children }: Props) {
+  const router = useRouter();
   const { post, get } = useRequests();
 
   const [username, setUsername] = useState('');
@@ -50,35 +53,38 @@ export default function LoginProtector({ children }: Props) {
       <p>You are not authenticated. Please input your username and password.</p>
 
       <div className='pt-4 space-y-3 pb-4'>
-        <FormGroup
-          intent={failure ? 'danger' : 'none'}
-          className="flex-grow pl-1"
-        >
-          <InputGroup
-            placeholder="Username"
-            disabled={loggingIn}
-            value={username}
-            intent={failure ? 'danger' : 'none'}
-            onChange={e => setUsername(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submit()}
-          />
-        </FormGroup>
+        <GoogleLoginButton onClick={() => router.push('/api/oauth/google/login')} />
 
-        <FormGroup
-          intent={failure ? 'danger' : 'none'}
-          helperText={failure && ""}
-          className="flex-grow pl-1"
-        >
-          <InputGroup
-            placeholder="Password"
-            disabled={loggingIn}
-            value={password}
-            intent={failure ? 'danger' : 'none'}
-            type='password'
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submit()}
-          />
-        </FormGroup>
+        <div className='flex flex-row items-center'>
+          <Divider className='flex-grow' />
+          Or
+          <Divider className='flex-grow' />
+        </div>
+
+        <div className='flex flex-row space-x-4'>
+          <FormGroup intent={failure ? 'danger' : 'none'} inline className='flex-grow block'>
+            <InputGroup
+              placeholder="Username"
+              disabled={loggingIn}
+              value={username}
+              intent={failure ? 'danger' : 'none'}
+              onChange={e => setUsername(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+            />
+          </FormGroup>
+
+          <FormGroup intent={failure ? 'danger' : 'none'} helperText={failure && ""} inline className='flex-grow block'>
+            <InputGroup
+              placeholder="Password"
+              disabled={loggingIn}
+              value={password}
+              intent={failure ? 'danger' : 'none'}
+              type='password'
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+            />
+          </FormGroup>
+        </div>
 
         <div className='w-full flex flex-row justify-end align-middle'>
           <Link href='/register'>

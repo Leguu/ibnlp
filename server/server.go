@@ -71,7 +71,7 @@ func setUpDev(e *echo.Echo) {
 	setUpProxy(e)
 }
 
-func RunServer(dev bool) error {
+func RunServer() error {
 	db, err := gorm.Open(sqlite.Open("ibnlp.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
@@ -89,7 +89,7 @@ func RunServer(dev bool) error {
 	e.Use(middleware.RegisterDbMiddleware(db))
 	e.Use(middleware.RegisterSearchMiddleware(searcher))
 
-	development := os.Getenv("ENV") == "DEVELOPMENT" || dev
+	development := os.Getenv("ENV") == "DEVELOPMENT"
 
 	if development {
 		setUpDev(e)

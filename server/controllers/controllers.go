@@ -40,6 +40,10 @@ func authenticatedRoute(handler echo.HandlerFunc) echo.HandlerFunc {
 		sess := middleware.GetSessionValues(c)
 		db := c.Get("db").(*gorm.DB)
 
+		if sess.UserID == "" {
+			return c.String(http.StatusUnauthorized, "Not logged in")
+		}
+
 		var user model.User
 		if err := db.First(&user, "id = ?", sess.UserID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.String(http.StatusUnauthorized, "Not logged in")

@@ -10,6 +10,7 @@ import (
 	"ibnlp/server/middleware"
 	"ibnlp/server/model"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -93,7 +94,7 @@ func GoogleCallback(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusUnauthorized, "Could not get token")
 	}
-	client := googleOauthConfig.Client(oauth2.NoContext, token)
+	client := googleOauthConfig.Client(c.Request().Context(), token)
 
 	userInfo, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
@@ -113,6 +114,7 @@ func GoogleCallback(c echo.Context) error {
 	var user model.User
 	if err := db.First(&user, "username = ?", data.Email).Error; err != nil {
 		user = model.User{
+			ID:       uuid.New().String(),
 			Username: data.Email,
 			Name:     data.Name,
 		}

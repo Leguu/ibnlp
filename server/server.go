@@ -97,8 +97,8 @@ func RunServer(dev bool) error {
 		// defer cancel()
 		log.Println("Serving development build")
 	} else {
-		_, cancel := runProductionClient()
-		defer cancel()
+		// _, cancel := runProductionClient()
+		// defer cancel()
 		setUpProxy(e)
 		log.Println("Serving production build")
 	}

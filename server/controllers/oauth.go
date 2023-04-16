@@ -114,7 +114,7 @@ func GoogleCallback(c echo.Context) error {
 	var user model.User
 	if err := db.First(&user, "username = ?", data.Email).Error; err != nil {
 		if !sess.AccessCodeVerified {
-			return c.String(http.StatusUnauthorized, "Access code not verified")
+			return c.String(http.StatusUnauthorized, "Access code not verified. Please register before trying to log in.")
 		}
 		user = model.User{
 			ID:       uuid.New().String(),

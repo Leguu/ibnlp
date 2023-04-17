@@ -129,8 +129,8 @@ const UnitPlannerPage: Page = () => {
       <Dialog
         isOpen={isOutputDialogOpen}
         title='Output'
-        canOutsideClickClose={outputLoading}
-        canEscapeKeyClose={outputLoading}
+        canOutsideClickClose={!outputLoading}
+        canEscapeKeyClose={!outputLoading}
         isCloseButtonShown={!outputLoading}
         onClose={() => setIsOutputDialogOpen(false)}
         className={Classes.DARK + ' max-w-4xl xs:w-full [&.bp4-dialog]:w-full'}

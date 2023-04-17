@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"ibnlp/search"
-	searchpython "ibnlp/search/python"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/semaphore"
@@ -25,7 +24,7 @@ func TestMain(m *testing.M) {
 		log.Fatal("error loading .env file")
 	}
 
-	p, err := searchpython.New()
+	p, err := search.NewPythonSearcher()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +61,7 @@ func testQueries(t *testing.T, queries []string, expectedResults []string) {
 		title := strings.Replace(query, "/", "", -1)
 		maxCalls.Acquire(ctx, 1)
 		wg.Add(1)
-		go t.Run(title, func(t *testing.T) {
+		t.Run(title, func(t *testing.T) {
 			defer wg.Done()
 			defer maxCalls.Release(1)
 
@@ -216,9 +215,9 @@ func TestSpeed(t *testing.T) {
 
 	wg.Wait()
 
-	time_taken := time.Since(start)
+	timeTaken := time.Since(start)
 
-	if time_taken > time.Second {
-		t.Fatal("Search took too long, took ", time_taken.Seconds(), " seconds")
+	if timeTaken > time.Second {
+		t.Fatal("Search took too long, took ", timeTaken.Seconds(), " seconds")
 	}
 }

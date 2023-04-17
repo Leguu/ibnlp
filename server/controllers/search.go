@@ -15,11 +15,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var searchRoutes = []route{
-	{
-		"",
-		http.MethodPost,
-		authenticatedRoute(PostSearch),
+var searchRoutes = route{
+	path: "/search",
+	handlers: []handler{
+		{http.MethodPost, authenticatedRoute(PostSearch)},
 	},
 }
 
@@ -62,7 +61,7 @@ const STANDARD_PROMPT string = `You are an assistant who has access to files.
 				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
 				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
 
-type SearchRequest struct {
+type searchRequest struct {
 	Query       string `json:"query"`
 	SearchQuery string `json:"searchQuery"`
 	History     []struct {
@@ -71,7 +70,7 @@ type SearchRequest struct {
 	} `json:"history"`
 }
 
-func constructGPTSearchRequest(request SearchRequest, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
+func constructGPTSearchRequest(request searchRequest, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
 	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
 		Role:    "system",
 		Content: STANDARD_PROMPT,
@@ -149,7 +148,7 @@ func resultsToString(results []search.SearchResult) string {
 func PostSearch(c echo.Context) error {
 	response := c.Response()
 
-	var request SearchRequest
+	var request searchRequest
 	if err := c.Bind(&request); err != nil {
 		return c.String(http.StatusBadRequest, "An error occured while parsing your request, please contact your administrator.")
 	}

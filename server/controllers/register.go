@@ -13,20 +13,20 @@ import (
 	"gorm.io/gorm"
 )
 
-var registerRoutes = []route{
-	{
-		"",
-		http.MethodPost,
-		postRegister,
+var registerRoutes = route{
+	path: "/register",
+	handlers: []handler{
+		{http.MethodPost, postRegister},
 	},
-	{
-		"/access",
-		http.MethodPost,
-		PostAccess,
-	},
+	children: []route{{
+		path: "/access",
+		handlers: []handler{
+			{http.MethodPost, postAccess},
+		},
+	}},
 }
 
-func PostAccess(c echo.Context) error {
+func postAccess(c echo.Context) error {
 	sess := middleware.GetSessionValues(c)
 
 	if sess.AccessCodeVerified {

@@ -12,16 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var loginRoutes = []route{
-	{
-		"",
-		http.MethodPost,
-		PostLogin,
-	},
-	{
-		"",
-		http.MethodGet,
-		authenticatedRoute(GetUser),
+var loginRoutes = route{
+	path: "/login",
+	handlers: []handler{
+		{http.MethodPost, PostLogin},
+		{http.MethodGet, authenticatedRoute(GetUser)},
 	},
 }
 

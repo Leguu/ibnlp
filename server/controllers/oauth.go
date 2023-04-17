@@ -17,17 +17,21 @@ import (
 	"gorm.io/gorm"
 )
 
-var googleOauthRoutes = []route{
-	{
-		"/login",
-		http.MethodGet,
-		GoogleLogin,
-	},
-	{
-		"/callback",
-		http.MethodGet,
-		GoogleCallback,
-	},
+var oauthRoutes = route{
+	path: "/oauth",
+	children: []route{{
+		path: "/google",
+		children: []route{
+			{
+				path:     "/login",
+				handlers: []handler{{http.MethodGet, GoogleLogin}},
+			},
+			{
+				path:     "/callback",
+				handlers: []handler{{http.MethodGet, GoogleCallback}},
+			},
+		},
+	}},
 }
 
 func getGoogleOauthConfig() *oauth2.Config {

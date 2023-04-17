@@ -12,15 +12,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var chatRoutes = []route{
-	{
-		"",
-		http.MethodPost,
-		authenticatedRoute(PostChat),
+var chatRoutes = route{
+	path: "/chat",
+	handlers: []handler{
+		{http.MethodPost, authenticatedRoute(apiChat)},
 	},
 }
 
-type ChatRequest struct {
+type chatRequest struct {
 	Query   string `json:"query"`
 	History []struct {
 		User      string `json:"user"`
@@ -28,10 +27,10 @@ type ChatRequest struct {
 	} `json:"history"`
 }
 
-func constructGPTChatRequest(request ChatRequest) (chatRequest nlp.ChatGPTRequest) {
+func (request chatRequest) constructGPTChatRequest() (result nlp.ChatGPTRequest) {
 	for _, history := range request.History {
-		chatRequest.Messages = append(
-			chatRequest.Messages,
+		result.Messages = append(
+			result.Messages,
 			[]nlp.ChatGPTMessage{{
 				Role:    "user",
 				Content: history.User,
@@ -47,23 +46,23 @@ func constructGPTChatRequest(request ChatRequest) (chatRequest nlp.ChatGPTReques
 		query = request.Query
 	}
 
-	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
+	result.Messages = append(result.Messages, nlp.ChatGPTMessage{
 		Role:    "user",
 		Content: query,
 	})
 
-	return chatRequest
+	return result
 }
 
-func PostChat(c echo.Context) error {
+func apiChat(c echo.Context) error {
 	response := c.Response()
 
-	var request ChatRequest
+	var request chatRequest
 	if err := c.Bind(&request); err != nil {
 		return c.String(http.StatusBadRequest, "An error occured while parsing your request, please contact your administrator.")
 	}
 
-	chatRequest := constructGPTChatRequest(request)
+	chatRequest := request.constructGPTChatRequest()
 
 	openAiProvider := nlp.ChatGPTProvider{}
 

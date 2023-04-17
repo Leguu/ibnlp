@@ -11,28 +11,37 @@ import (
 	"gorm.io/gorm"
 )
 
+type handler struct {
+	method      string
+	handlerFunc echo.HandlerFunc
+}
+
 type route struct {
-	string
-	method string
-	echo.HandlerFunc
+	path     string
+	handlers []handler
+	children []route
+}
+
+var routes = route{
+	children: []route{
+		chatRoutes,
+		registerRoutes,
+		oauthRoutes,
+		loginRoutes,
+	},
 }
 
 func (route route) registerRoute(group *echo.Group) {
-	group.Add(route.method, route.string, route.HandlerFunc)
-}
-
-func enableRoutes(group *echo.Group, routes []route) {
-	for _, route := range routes {
-		route.registerRoute(group)
+	for _, handler := range route.handlers {
+		group.Add(handler.method, route.path, handler.handlerFunc)
+	}
+	for _, child := range route.children {
+		child.registerRoute(group.Group(route.path))
 	}
 }
 
 func SetUpRoutes(group *echo.Group) {
-	enableRoutes(group.Group("/oauth/google"), googleOauthRoutes)
-	enableRoutes(group.Group("/search"), searchRoutes)
-	enableRoutes(group.Group("/login"), loginRoutes)
-	enableRoutes(group.Group("/register"), registerRoutes)
-	enableRoutes(group.Group("/chat"), chatRoutes)
+	routes.registerRoute(group)
 }
 
 func authenticatedRoute(handler echo.HandlerFunc) echo.HandlerFunc {

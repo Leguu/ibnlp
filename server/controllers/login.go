@@ -18,6 +18,20 @@ var loginRoutes = route{
 		{http.MethodPost, PostLogin},
 		{http.MethodGet, authenticatedRoute(GetUser)},
 	},
+	children: []route{{
+		path: "/logout",
+		handlers: []handler{
+			{http.MethodGet, GetLogout},
+		},
+	}},
+}
+
+func GetLogout(c echo.Context) error {
+	sess := middleware.GetSessionValues(c)
+	sess.UserID = ""
+	sess.Save(c)
+
+	return c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 func PostLogin(c echo.Context) error {

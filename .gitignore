@@ -3,6 +3,7 @@ data/
 *.local
 *.log
 log.json
+log*json
 *.code-workspace
 *.db
 *.exe

@@ -176,10 +176,11 @@ func PostSearch(c echo.Context) error {
 	totalResponse := nlp.StreamResponsesToWriter(response.Writer, responses)
 
 	session := middleware.GetSessionValues(c)
-	log.Info().Str("query", request.Query).
+	log.Info().
+		Str("query", request.Query).
+		Str("searchQuery", request.SearchQuery).
 		Str("user", session.UserID).
 		Str("response", totalResponse).
-		Str("results", resultsToString(results)).
 		Msg("executed search")
 
 	return c.NoContent(http.StatusOK)

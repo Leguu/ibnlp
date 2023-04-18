@@ -7,7 +7,7 @@ import { Page } from '../_app';
 const ProductCard = ({ title, description, href }: { title: string, description: ReactNode, href: string; }) => {
   return (
     <Link href={href} className='hover:no-underline text-white'>
-      <Card interactive className='w-80'>
+      <Card interactive className='w-80 min-h-[theme(spacing.40)] m-2'>
         <H5>{title}</H5>
 
         {description}
@@ -18,11 +18,11 @@ const ProductCard = ({ title, description, href }: { title: string, description:
 
 const PortalPage: Page = () => {
   return (
-    <div className='max-w-3xl mx-auto flex flex-wrap space-y-3 p-4 space-x-3 justify-center'>
+    <div className='max-w-3xl mx-auto flex flex-wrap p-2 justify-center'>
       <ProductCard
         title='Unit Planner'
         description={<>
-          <p className='text-sm text-gray-500'>
+          <p className='text-gray-500'>
             Plan your lessons with our unit planner:
           </p>
 
@@ -33,6 +33,16 @@ const PortalPage: Page = () => {
           </ul>
         </>}
         href='/unit-planner'
+      />
+
+      <ProductCard
+        title='Semantic Search'
+        href='/search'
+        description={<>
+          <p className='text-gray-500'>
+            Search for content in any document using natural language.
+          </p>
+        </>}
       />
 
     </div>

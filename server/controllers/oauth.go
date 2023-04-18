@@ -39,7 +39,7 @@ func getGoogleOauthConfig() *oauth2.Config {
 	if os.Getenv("ENV") == "DEVELOPMENT" {
 		redirectURL = "http://localhost:8080/api/oauth/google/callback"
 	} else {
-		redirectURL = "https://semanticinquiry.com/api/oauth/google/callback"
+		redirectURL = os.Getenv("GOOGLE_REDIRECT_URI")
 	}
 	return &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),

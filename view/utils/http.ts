@@ -1,8 +1,6 @@
-import axios, { AxiosResponse } from 'axios';
-import { useRouter } from 'next/router';
-import { useCallback, useMemo } from 'react';
+import axios from 'axios';
+import { useCallback } from 'react';
 import { AppToaster } from './toaster';
-import { json } from 'stream/consumers';
 
 const apiPath = '/api';
 
@@ -13,17 +11,30 @@ interface Options<T> {
 }
 
 export const useRequests = () => {
-  const handleErrors = (e: any) => {
-    AppToaster?.show({
-      message: e.response.data,
-      intent: 'danger',
-      icon: 'error'
-    });
+  const handleErrors = async (e: any) => {
+    console.error(e);
+    if (e.response) {
+      AppToaster?.show({
+        message: e.response.data,
+        intent: 'danger',
+        icon: 'error'
+      });
+    } else if (e instanceof Response) {
+      const text = await e.text();
+
+      AppToaster?.show({
+        message: text,
+        intent: 'danger',
+        icon: 'error'
+      });
+    }
   };
 
   const get = useCallback(<T>(url: string, options?: Options<T>) =>
     axios.get<T>(`${apiPath}${url}`)
-      .then(r => options?.onSuccess?.(r.data))
+      .then(r => {
+        options?.onSuccess?.(r.data);
+      })
       .catch(e => {
         if (options?.handleErrors !== false) {
           handleErrors(e);
@@ -35,7 +46,9 @@ export const useRequests = () => {
 
   const post = useCallback(<T>(url: string, data: any, options?: Options<T>) =>
     axios.post<T>(`${apiPath}${url}`, data)
-      .then(r => options?.onSuccess?.(r?.data))
+      .then(r => {
+        options?.onSuccess?.(r?.data);
+      })
       .catch(e => {
         if (options?.handleErrors !== false) {
           handleErrors(e);

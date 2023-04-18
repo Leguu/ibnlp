@@ -1,7 +1,6 @@
 import { useRequests } from '@/utils/http';
 import { AppToaster } from '@/utils/toaster';
 import { Button, Classes, Dialog, DialogBody, FormGroup, InputGroup } from '@blueprintjs/core';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useState } from 'react';
 import { GoogleLoginButton } from 'react-social-login-buttons';

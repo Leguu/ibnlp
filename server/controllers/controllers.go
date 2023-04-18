@@ -28,6 +28,7 @@ var routes = route{
 		registerRoutes,
 		oauthRoutes,
 		loginRoutes,
+		searchRoutes,
 	},
 }
 

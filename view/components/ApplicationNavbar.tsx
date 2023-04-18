@@ -1,5 +1,8 @@
+import { useRequests } from '@/utils/http';
+import { AppToaster } from '@/utils/toaster';
 import { Icon, Button, Divider, Navbar as BPNavbar, OverflowList } from "@blueprintjs/core";
 import Link from "next/link";
+import { useRouter } from 'next/router';
 import React from "react";
 
 export interface ApplicationNavbarProps {
@@ -7,16 +10,36 @@ export interface ApplicationNavbarProps {
 }
 
 export default function ApplicationNavbar({ pageName }: ApplicationNavbarProps) {
+  const router = useRouter();
+  const { get } = useRequests();
+
+  const logout = () => {
+    get('/login/logout', {
+      onSuccess: () => {
+        router.push('/');
+        AppToaster?.show({
+          message: 'Logged out successfully',
+          intent: 'success',
+          icon: 'tick'
+        });
+      }
+    });
+  };
+
   return (
     <BPNavbar className='sticky top-0 xl:top-2 left-0 right-0 h-12 max-w-7xl mb-4
         flex flex-row items-center
         ml-auto mr-auto select-none'
       style={{ height: ApplicationNavbar.height }}>
 
-      <Icon icon='search-around' />
+      <Link href='/portal' style={{ color: 'inherit' }} className='flex focus:outline-none'>
+        <Icon icon='search-around' />
+      </Link>
 
       <Link href='/portal' style={{ color: 'inherit' }} className='focus:outline-none'>
-        <h6 className='ml-3 font-semibold decoration-0 text-inherit'>Semantic Inquiry</h6>
+        <h6 className='ml-3 font-semibold decoration-0 text-inherit hidden md:block'>
+          Semantic Inquiry
+        </h6>
       </Link>
 
       {pageName && <>
@@ -27,13 +50,16 @@ export default function ApplicationNavbar({ pageName }: ApplicationNavbarProps) 
 
       <div className='flex-grow' />
 
-      {/* <Link href='/teacher' className="hidden md:block">
-        <Button minimal>Teacher Portal</Button>
-      </Link>
+      {router.pathname !== '/portal' && <>
+        <Link href='/portal' className="hidden md:block">
+          <Button minimal>Portal</Button>
+        </Link>
+        <Divider className='h-6 mx-3 mr-5 hidden md:block' />
+      </>}
 
-      <Link href='/search' className="hidden md:block">
-        <Button minimal>Search</Button>
-      </Link> */}
+      <Button icon='log-out' onClick={logout}>
+        Logout
+      </Button>
     </BPNavbar>
   );
 }

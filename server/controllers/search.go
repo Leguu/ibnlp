@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,6 +19,27 @@ var searchRoutes = route{
 	handlers: []handler{
 		{http.MethodPost, authenticatedRoute(PostSearch)},
 	},
+	children: []route{
+		{
+			path: "/ping",
+			handlers: []handler{
+				{http.MethodGet, authenticatedRoute(GetPing)},
+			},
+		},
+	},
+}
+
+func GetPing(c echo.Context) error {
+	pythonSearcher, err := search.NewPythonSearcher()
+	if (err != nil) {
+		return c.NoContent(http.StatusOK)
+	}
+	resp, err := http.Get(pythonSearcher.Url + "ping")
+	if (err != nil) {
+		return c.NoContent(http.StatusServiceUnavailable)
+	}
+
+	return c.NoContent(resp.StatusCode)
 }
 
 func getContent(result search.SearchResult) string {
@@ -59,7 +79,7 @@ const IB_PROMPT string = `You are an assistant for the International Baccalaurea
 const STANDARD_PROMPT string = `You are an assistant who has access to files.
 				You will be given pages from those files, and you must answer the user's query USING ONLY THE PAGES, or say 'I don't know' if you can't.
 				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
-				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
+				Cite the file name and page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
 
 type searchRequest struct {
 	Query       string `json:"query"`
@@ -121,28 +141,18 @@ func constructGPTSearchRequest(request searchRequest, results []search.SearchRes
 	return chatRequest
 }
 
-func doSearch(searcher search.Searcher, searchQuery string) (results []search.SearchResult, err error) {
+func doSearch(searcher search.Searcher, searchQuery string) ([]search.SearchResult, string) {
 	if strings.TrimSpace(searchQuery) == "" {
-		return nil, errors.New("The search query was empty")
+		return nil, "The search query was empty"
 	}
 
-	results, err = searcher.Search(searchQuery)
+	results, err := searcher.Search(searchQuery)
 	if err != nil {
 		log.Error().Err(err).Msg("error while searching")
-		return nil, errors.New("An error occured while conducting your search, please try again later.")
+		return nil, "An error occured while conducting your search, please try again later."
 	}
 
-	return results, err
-}
-
-func resultsToString(results []search.SearchResult) string {
-	var sb strings.Builder
-
-	for _, result := range results {
-		sb.WriteString(result.Match)
-	}
-
-	return sb.String()
+	return results, ""
 }
 
 func PostSearch(c echo.Context) error {
@@ -156,10 +166,12 @@ func PostSearch(c echo.Context) error {
 	var results []search.SearchResult
 	if request.SearchQuery != "" {
 		searcher := c.Get("search").(search.Searcher)
-		var err error
-		results, err = doSearch(searcher, request.SearchQuery)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
+
+		var errorMessage string
+		results, errorMessage = doSearch(searcher, request.SearchQuery)
+
+		if results == nil {
+			return c.String(http.StatusInternalServerError, errorMessage)
 		}
 	}
 

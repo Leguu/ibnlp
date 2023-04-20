@@ -1,22 +1,51 @@
 import ApplicationLayout from '@/layouts/ApplicationLayout';
-import { Card, H5 } from '@blueprintjs/core';
+import { Card, Classes, H5 } from '@blueprintjs/core';
 import Link from 'next/link';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Page } from '../_app';
+import { useRequests } from '@/utils/http';
+import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
 
-const ProductCard = ({ title, description, href }: { title: string, description: ReactNode, href: string; }) => {
+interface Props {
+  title: string;
+  description: ReactNode;
+  href: string;
+  disabled?: boolean;
+  hoverText?: string;
+}
+
+const ProductCard = ({ title, description, href, disabled, hoverText }: Props) => {
   return (
-    <Link href={href} className='hover:no-underline text-white'>
-      <Card interactive className='w-80 min-h-[theme(spacing.40)] m-2'>
-        <H5>{title}</H5>
+    <Tooltip2
+      content={hoverText}
+      matchTargetWidth
+      className={Classes.DARK}
+    >
+      <Link href={href} className={'hover:no-underline text-white' + (disabled ? ' pointer-events-none opacity-50' : '')} >
+        <Card interactive={!disabled} className='w-80 min-h-[theme(spacing.40)] m-2'>
+          <H5>{title}</H5>
 
-        {description}
-      </Card>
-    </Link>
+          {description}
+        </Card>
+      </Link>
+    </Tooltip2>
   );
 };
 
 const PortalPage: Page = () => {
+  const { get } = useRequests();
+
+  const [searchAvailable, setSearchAvailable] = useState(false);
+
+  useEffect(() => {
+    get('/search/ping', {
+      onSuccess: () => {
+        setSearchAvailable(true);
+      },
+      handleErrors: false
+    });
+  }, [get]);
+
   return (
     <div className='max-w-3xl mx-auto flex flex-wrap p-2 justify-center'>
       <ProductCard
@@ -38,6 +67,8 @@ const PortalPage: Page = () => {
       <ProductCard
         title='Semantic Search'
         href='/search'
+        disabled={!searchAvailable}
+        hoverText={!searchAvailable ? 'Search is currently disabled. If you think this is a mistake, please contact your administrator.' : undefined}
         description={<>
           <p className='text-gray-500'>
             Search for content in any document using natural language.

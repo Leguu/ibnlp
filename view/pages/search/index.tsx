@@ -1,9 +1,11 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
-import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6 } from '@blueprintjs/core';
+import { Card, H5, Classes, InputGroup, Button, Callout, FormGroup, H6, Toaster } from '@blueprintjs/core';
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
 import { useRequests } from '@/utils/http';
 import ApplicationLayout from '@/layouts/ApplicationLayout';
 import { Page } from '../_app';
+import { useRouter } from 'next/router';
+import { AppToaster } from '@/utils/toaster';
 
 interface SearchResult {
   query: string;
@@ -15,7 +17,7 @@ const aiPrompt = 'AI prompt';
 const searchPrompt = 'Search files';
 
 const Home: Page = () => {
-  const requests = useRequests();
+  const { get, stream } = useRequests();
 
   const [results, setResults] = useState<SearchResult[]>([]);
 
@@ -26,10 +28,24 @@ const Home: Page = () => {
 
   const canSearch = searchQuery.trim() !== '';
 
+  const router = useRouter();
+  useEffect(() => {
+    get('/search/ping', {
+      handleErrors: false,
+      onError: () => {
+        AppToaster?.show({
+          intent: 'warning',
+          message: 'Search is not available.',
+        });
+        router.push('/portal');
+      }
+    });
+  }, [get, router]);
+
   const search = async () => {
     setIsSearching(true);
 
-    const iterator = requests.stream('/search', {
+    const iterator = stream('/search', {
       query,
       searchQuery,
       history: results.map(result => ({

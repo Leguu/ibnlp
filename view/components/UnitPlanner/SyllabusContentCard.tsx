@@ -48,15 +48,6 @@ const nodeById = (id: string, tree: TreeNodeInfo[]): TreeNodeInfo | undefined =>
   }
 };
 
-const deselectNodeById = (id: string, tree: TreeNodeInfo[]): TreeNodeInfo[] => {
-  const clonedTree = cloneDeep(tree);
-  const node = nodeById(id, clonedTree);
-  if (node) {
-    node.isSelected = false;
-  }
-  return clonedTree;
-};
-
 const hasSelectedNodes = (node: TreeNodeInfo): boolean => {
   if (node.isSelected) {
     return true;
@@ -126,6 +117,15 @@ export const SyllabusContentCard = ({ tree, setTree }: {
     const cloneTree = cloneDeep(tree);
     Tree.nodeFromPath(nodePath, cloneTree).isExpanded = true;
     setTree(cloneTree);
+  };
+
+  const deselectNodeById = (id: string, tree: TreeNodeInfo[]) => {
+    const clonedTree = cloneDeep(tree);
+    const node = nodeById(id, clonedTree);
+    if (node) {
+      node.isSelected = false;
+      setTree(clonedTree);
+    }
   };
 
   const mapNode = (node: TreeNodeInfo): TreeNodeInfo => ({

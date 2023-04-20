@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer, util, CrossEncoder
 from nltk.corpus import stopwords
 from torch import Tensor
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, PlainTextResponse
 from starlette.routing import Route
 from starlette.requests import Request
 from .extract import Entry
@@ -209,6 +209,16 @@ async def search(request: Request):
     return JSONResponse([result.__dict__ for result in results])
 
 
+async def ping(request: Request):
+    return PlainTextResponse()
+
+
 development = os.environ.get("ENV") == "DEVELOPMENT"
 
-app = Starlette(debug=development, routes=[Route("/", search, methods=["POST"])])
+app = Starlette(
+    debug=development,
+    routes=[
+        Route("/", search, methods=["POST"]),
+        Route("/ping", ping, methods=["GET"]),
+    ],
+)

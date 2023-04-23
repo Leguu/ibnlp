@@ -8,9 +8,9 @@ const generateInquiryQuestionsPrompt = (syllabusContent: string[], conceptualUnd
   let prompt = `You are IB Business management teacher that helps me to plan inquiry-based learning unit. 
   Your task is to generate three categories for student inquiry: factual, conceptual, debatable. 
   You should base your factual questions on "${syllabusContent.join(', ')}"; 
-  You should base your debatable and conceptual questions on "${conceptualUnderstandings}".`;
-
-  prompt += ` Here is some additional information about good inquiry questions. Use it as a guide for your creation.
+  You should base your debatable and conceptual questions on "${conceptualUnderstandings}".
+  
+  Here is some additional information about good inquiry questions. Use it as a guide for your creation.
   
   Factual questions should be Knowledge/fact-based,
   Content-driven, Skills-related, Supported by evidence,
@@ -62,9 +62,8 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
       setConceptualUnderstandingsLoading(true);
       const output = stream('/chat', { query: conceptualUnderstandingsPrompt, history: [] });
 
-      let text = '';
       for await (const chunk of output) {
-        text += chunk;
+        conceptualUnderstandings += chunk;
       }
       setConceptualUnderstandingsLoading(false);
     }
@@ -74,9 +73,12 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
     setInquiryQuestionsLoading(true);
     const output = stream('/chat', { query: inquiryQuestionsPrompt, history: [] });
 
+    let text = '';
     for await (const chunk of output) {
       setInquiryQuestions(iq => iq + chunk);
+      text += chunk;
     }
+    setInquiryQuestions(text);
     setInquiryQuestionsLoading(false);
   };
 

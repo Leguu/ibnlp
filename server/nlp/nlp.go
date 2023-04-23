@@ -117,6 +117,7 @@ func streamResponseToChannel(body io.ReadCloser, out chan<- ChatGPTResponse) {
 		var t ChatGPTResponse
 		if err := decoder.Decode(&t); err != nil {
 			log.Println("error while decoding: ", err)
+			log.Println(line)
 			continue
 		}
 

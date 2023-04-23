@@ -3,6 +3,7 @@ import { Button } from '@blueprintjs/core';
 import { generateConceptualUnderstandingsPrompt } from './StandardGenerators';
 import { useState } from 'react';
 import OutputDialog from '../OutputDialog';
+import wait from '@/utils/wait';
 
 const generateInquiryQuestionsPrompt = (syllabusContent: string[], conceptualUnderstandings: string) => {
   let prompt = `You are IB Business management teacher that helps me to plan inquiry-based learning unit. 
@@ -69,6 +70,8 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
     }
 
     const inquiryQuestionsPrompt = generateInquiryQuestionsPrompt(syllabusContent, conceptualUnderstandings);
+
+    await wait(2000);
 
     setInquiryQuestionsLoading(true);
     const output = stream('/chat', { query: inquiryQuestionsPrompt, history: [] });

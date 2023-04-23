@@ -66,12 +66,13 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
       for await (const chunk of output) {
         conceptualUnderstandings += chunk;
       }
+
+      await wait(2000);
+
       setConceptualUnderstandingsLoading(false);
     }
 
     const inquiryQuestionsPrompt = generateInquiryQuestionsPrompt(syllabusContent, conceptualUnderstandings);
-
-    await wait(2000);
 
     setInquiryQuestionsLoading(true);
     const output = stream('/chat', { query: inquiryQuestionsPrompt, history: [] });

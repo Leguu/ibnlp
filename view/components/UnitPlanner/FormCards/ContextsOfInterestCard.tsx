@@ -2,7 +2,7 @@ import { Card, Button, FormGroup, InputGroup } from '@blueprintjs/core';
 import { useState } from 'react';
 import { RemovableItem } from './RemovableItem';
 
-export const ContextsOfInterestCard = ({ contexts, setContexts }: {
+const ContextsOfInterestCard = ({ contexts, setContexts }: {
   contexts: string[];
   setContexts: (selectedAims: string[]) => void;
 }) => {
@@ -50,3 +50,5 @@ export const ContextsOfInterestCard = ({ contexts, setContexts }: {
     </Card>
   );
 };
+
+export default ContextsOfInterestCard;

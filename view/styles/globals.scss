@@ -63,3 +63,12 @@ body,
 .bp4-drawer.bp4-position-right {
   @apply w-full;
 }
+
+.bp4-tree-node-content {
+  @apply h-auto;
+}
+
+.bp4-tree-node-label {
+  @apply whitespace-break-spaces;
+  @apply py-1;
+}

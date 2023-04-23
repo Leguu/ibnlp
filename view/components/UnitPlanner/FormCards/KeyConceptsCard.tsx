@@ -9,7 +9,7 @@ const concepts: string[] = [
   'Sustainability'
 ];
 
-export const KeyConceptsCard = ({ selectedConcepts, setSelectedConcepts }: {
+const KeyConceptsCard = ({ selectedConcepts, setSelectedConcepts }: {
   selectedConcepts: string[];
   setSelectedConcepts: (selectedAims: string[]) => void;
 }) => {
@@ -70,3 +70,5 @@ export const KeyConceptsCard = ({ selectedConcepts, setSelectedConcepts }: {
     </Card>
   );
 };
+
+export default KeyConceptsCard;

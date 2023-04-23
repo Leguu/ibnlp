@@ -1,12 +1,19 @@
 import ApplicationLayout from '@/layouts/ApplicationLayout';
 import { Page } from '../_app';
-import { Button, Card, Classes, Dialog, DialogBody, FormGroup, InputGroup, TreeNodeInfo } from '@blueprintjs/core';
+import { Button, Card, Classes, Dialog, DialogBody, Divider, FormGroup, InputGroup, Label, TreeNodeInfo } from '@blueprintjs/core';
 import { useState } from 'react';
-import { ContextsOfInterestCard } from '../../components/UnitPlanner/ContextsOfInterestCard';
 import { useRequests } from '@/utils/http';
-import { KeyConceptsCard } from '@/components/UnitPlanner/KeyConceptsCard';
-import { SubjectAimsCard } from '@/components/UnitPlanner/SubjectAimsCard';
-import { syllabusToTree, syllabus, filterSelectedNodesTree, SyllabusContentCard } from '@/components/UnitPlanner/SyllabusContentCard';
+import ContextsOfInterestCard from '@/components/UnitPlanner/FormCards/ContextsOfInterestCard';
+import StandardGenerators from '@/components/UnitPlanner/Generators/StandardGenerators';
+import KeyConceptsCard from '@/components/UnitPlanner/FormCards/KeyConceptsCard';
+import SubjectAimsCard from '@/components/UnitPlanner/FormCards/SubjectAimsCard';
+import OutputDialog from '@/components/UnitPlanner/OutputDialog';
+import InquiryQuestionsGenerator from '@/components/UnitPlanner/Generators/InquiryQuestionsGenerator';
+import ATLGenerator from '@/components/UnitPlanner/Generators/ATLGenerator';
+import SyllabusContentCard, { syllabusToTree, syllabus, SyllabusContent } from '@/components/UnitPlanner/FormCards/SyllabusContentCard';
+import { filterSelectedNodesTree } from '@/components/UnitPlanner/SyllabusTree';
+import LearningObjectivesGenerator from '@/components/UnitPlanner/Generators/LearningObjectivesGenerator';
+import LearningResourcesGenerator from '@/components/UnitPlanner/Generators/LearningResourcesGenerator';
 
 type ChatRequest = {
   query: string;
@@ -16,14 +23,12 @@ type ChatRequest = {
   }[];
 };
 
-const getSelectedIds = (tree: TreeNodeInfo[]): string[] => {
+export const getTreeIds = (tree: TreeNodeInfo[]): string[] => {
   const ids: string[] = [];
   for (const node of tree) {
-    if (node.isSelected) {
-      ids.push(node.id as string);
-    }
+    ids.push(node.id as string);
     if (node.childNodes) {
-      ids.push(...getSelectedIds(node.childNodes));
+      ids.push(...getTreeIds(node.childNodes));
     }
   }
   return ids;
@@ -35,34 +40,17 @@ const UnitPlannerPage: Page = () => {
   const [selectedConcepts, setSelectedConcepts] = useState<string[]>([]);
   const [contexts, setContexts] = useState<string[]>([]);
 
-  const [tree, setTree] = useState<TreeNodeInfo[]>(syllabusToTree(syllabus));
+  const [tree, setTree] = useState<TreeNodeInfo<SyllabusContent>[]>(syllabusToTree(syllabus));
 
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
 
   const [outputLoading, setOutputLoading] = useState(false);
   const [output, setOutput] = useState('');
 
-  const onSubmit = async () => {
+  const onSubmit = async (query: string) => {
     setOutput('');
     setOutputLoading(true);
     setIsOutputDialogOpen(true);
-
-    const filteredTree = filterSelectedNodesTree(tree);
-    const syllabusContent = getSelectedIds(filteredTree);
-
-    let query = '';
-    if (syllabusContent.length > 0) {
-      query += `I want to plan a unit on the following topics: "${syllabusContent.join(', ')}". `;
-    }
-    if (selectedAims.length > 0) {
-      query += `I want to teach the following subject aims: ${selectedAims.join(', ')}. `;
-    }
-    if (selectedConcepts.length > 0) {
-      query += `I want to teach the following key concepts: ${selectedConcepts.join(', ')}. `;
-    }
-    if (contexts.length > 0) {
-      query += `I want to teach the following contexts of interest: ${contexts.join(', ')}.`;
-    }
 
     const request: ChatRequest = { query, history: [] };
 
@@ -76,70 +64,65 @@ const UnitPlannerPage: Page = () => {
   };
 
   return (
-    <div className='max-w-3xl w-full mx-auto space-y-2'>
-      <Card>
-        <FormGroup
-          label='Subject'
-        >
-          <InputGroup />
-        </FormGroup>
+    <div className='max-w-5xl w-full mx-auto lg:grid grid-cols-none lg:grid-cols-12 gap-4'>
+      <div className='space-y-2 w-full col-span-9'>
+        <SubjectAimsCard selectedAims={selectedAims} setSelectedAims={setSelectedAims} />
 
-        <FormGroup
-          label='Teachers'
-        >
-          <InputGroup />
-        </FormGroup>
+        <KeyConceptsCard selectedConcepts={selectedConcepts} setSelectedConcepts={setSelectedConcepts} />
 
-        <FormGroup
-          label='Grades'
-        >
-          <InputGroup />
-        </FormGroup>
+        <SyllabusContentCard
+          tree={tree}
+          setTree={setTree}
+        />
 
-        <FormGroup
-          label='Name of Unit'
-        >
-          <InputGroup />
-        </FormGroup>
-      </Card>
-
-      <SubjectAimsCard selectedAims={selectedAims} setSelectedAims={setSelectedAims} />
-
-      <KeyConceptsCard selectedConcepts={selectedConcepts} setSelectedConcepts={setSelectedConcepts} />
-
-      <SyllabusContentCard
-        tree={tree}
-        setTree={setTree}
-      />
-
-      <ContextsOfInterestCard
-        contexts={contexts}
-        setContexts={setContexts}
-      />
-
-      <div className='flex flex-row justify-end'>
-        <Button
-          onClick={onSubmit}
-          intent='primary'
-        >
-          Generate
-        </Button>
+        <ContextsOfInterestCard
+          contexts={contexts}
+          setContexts={setContexts}
+        />
       </div>
 
-      <Dialog
+      <div className='col-span-3 p-4'>
+        <Label className='[&.bp4-label]:mb-1'>Generate:</Label>
+
+        <div className='space-y-2'>
+          <InquiryQuestionsGenerator
+            contextOfInterest={contexts}
+            keyConcepts={selectedConcepts}
+            subjectAims={selectedAims}
+            syllabusContent={getTreeIds(filterSelectedNodesTree(tree))}
+          />
+
+          <StandardGenerators
+            contextOfInterest={contexts}
+            keyConcepts={selectedConcepts}
+            subjectAims={selectedAims}
+            syllabusContent={getTreeIds(filterSelectedNodesTree(tree))}
+            onPromptGenerated={onSubmit}
+          />
+
+          <Divider />
+
+          <ATLGenerator
+            syllabusContent={getTreeIds(filterSelectedNodesTree(tree))}
+          />
+
+          <LearningObjectivesGenerator
+            tree={tree}
+          />
+
+          <LearningResourcesGenerator
+            syllabusContent={getTreeIds(filterSelectedNodesTree(tree))}
+          />
+        </div>
+      </div>
+
+      <OutputDialog
         isOpen={isOutputDialogOpen}
-        title='Output'
-        canOutsideClickClose={!outputLoading}
-        canEscapeKeyClose={!outputLoading}
-        isCloseButtonShown={!outputLoading}
+        loading={outputLoading}
         onClose={() => setIsOutputDialogOpen(false)}
-        className={Classes.DARK + ' max-w-4xl xs:w-full [&.bp4-dialog]:w-full'}
-        portalClassName='w-full'
       >
-        <DialogBody className='whitespace-pre-line'>
-          {output}
-        </DialogBody>
-      </Dialog>
+        {output}
+      </OutputDialog>
     </div>
   );
 };

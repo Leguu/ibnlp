@@ -14,3 +14,5 @@ export const RemovableItem = ({ children, onRemove }: {
     </div>
   );
 };
+
+export default RemovableItem;

@@ -8,14 +8,6 @@ interface SubjectAim {
 }
 
 const aims: SubjectAim[] = [{
-  name: 'Individuals and Societies',
-  aims: [
-    'Explore and critically engage with multiple perspectives and ways of thinking',
-    'Investigate and evaluate the interactions between individuals and societies',
-    'Think and act as informed and principled individuals in societies',
-    'Understand and value the variety and diversity of the human experience across time and place',
-  ]
-}, {
   name: 'Business Management',
   aims: [
     'Develop as confident, creative and compassionate business leaders, entrepreneurs, social entrepreneurs and as change agents',

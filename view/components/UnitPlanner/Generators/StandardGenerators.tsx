@@ -21,8 +21,8 @@ export const generateConceptualUnderstandingsPrompt = (syllabusContent: string[]
 const generateToKConnectionsPrompt = (syllabusContent: string[]) => {
   let prompt = `You are IB Business management teacher who plans connections between the subject and the Theory of knowledge for the ${syllabusContent.join(', ')}.`;
 
-  prompt += `Suggest a few ToK discussion prompts that relate to the topics above.
-  
+  prompt += `Suggest a two classroom activities and a few ToK discussion prompts that relate to the topics above.
+
   Here are some guidelines for making connection:
   1. make connections between a critical approach to the construction of knowledge, the academic disciplines and the wider world
   2. develop an awareness of how individuals and communities construct knowledge and how this is critically examined
@@ -34,19 +34,29 @@ const generateToKConnectionsPrompt = (syllabusContent: string[]) => {
 };
 
 const generateCASConnectionsPrompt = (syllabusContent: string[], subjectAims: string[], contextOfInterest: string[]) => {
-  let prompt = `You are IB Business management teacher that plans opportunities for CAS for students studying ${syllabusContent.join(', ')}`;
+  let prompt = `You are IB Business management teacher that plans opportunities for CAS for students studying "${syllabusContent.join(', ')}"`;
 
   if (subjectAims.length > 0) {
-    prompt += `, ${subjectAims.join(', ')}`;
+    prompt += `, "${subjectAims.join(', ')}"`;
   }
 
   if (contextOfInterest.length > 0) {
-    prompt += `and are interested ${contextOfInterest.join(', ')}`;
+    prompt += ` and are interested "${contextOfInterest.join(', ')}"`;
   }
 
   prompt += '.';
 
-  prompt += ` Suggest a few CAS activities or projects that IB DP students could pursue.`;
+  prompt += ` Suggest a few CAS activities or projects that IB DP students could pursue.
+  
+  Take into account these principles when suggesting CAS activities:
+
+  In the business management course students explore interactions between humans and their environment in their own context and learn to reflect on their own identity, and potential roles in society. 
+  They are encouraged to contribute to positive change in their communities. 
+  Students develop awareness and knowledge of how certain businesses work, through in-depth research of case studies, including an IA component that deepens their understanding of the complexities in business.
+
+  This knowledge is extended through creativity, activity, service (CAS), where students are motivated to act as responsible global citizens. 
+  By acquiring skills, they learn about strategic thinking and setting objectives, acquire planning skills and develop an appreciation for different cultural perspectives within organizations. 
+  These skills support their CAS activities and help the students to choose CAS activities with significance or meaning for their communities.`;
 
   return prompt;
 };

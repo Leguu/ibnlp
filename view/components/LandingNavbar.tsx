@@ -16,15 +16,15 @@ export default function LandingNavbar() {
 
       <div className='flex-grow' />
 
-      <Link href='/about' className="hidden md:block">
+      {/* <Link href='/about' className="hidden md:block">
         <Button minimal>About Us</Button>
       </Link>
 
       <Link href='/why-semantic' className="hidden md:block">
         <Button minimal>Why Semantic</Button>
-      </Link>
+      </Link> */}
 
-      <Divider className='h-6' />
+      {/* <Divider className='h-6' /> */}
 
       <Link href='/portal'>
         <Button minimal rightIcon='log-in'>

@@ -101,9 +101,9 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
       onClose={() => setOutputDialogOpen(false)}
       loading={inquiryQuestionsLoading || conceptualUnderstandingsLoading}
     >
-      {conceptualUnderstandingsLoading && 'Please wait, generating conceptual understandings...'}
-
-      {inquiryQuestions}
+      {conceptualUnderstandingsLoading
+        ? 'Please wait, generating prerequisites...'
+        : inquiryQuestions}
     </OutputDialog>
   </>;
 };

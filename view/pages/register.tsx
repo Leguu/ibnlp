@@ -86,13 +86,7 @@ export default function RegisterPage() {
     </div>
   </>, <>
     <div className='max-w-xs space-y-5'>
-      <GoogleLoginButton onClick={() => router.push('/api/oauth/google/login')} />
-
-      <div className='px-1'>
-        <Button onClick={() => setCurrentStep(2)} className='w-full' alignText='left'>
-          Standard Registration
-        </Button>
-      </div>
+      <GoogleLoginButton text='Register with Google' onClick={() => router.push('/api/oauth/google/login')} />
     </div>
   </>, <>
     <FormGroup

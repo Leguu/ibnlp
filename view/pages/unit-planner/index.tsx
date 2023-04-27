@@ -112,6 +112,7 @@ const UnitPlannerPage: Page = () => {
 
           <LearningResourcesGenerator
             syllabusContent={getTreeIds(filterSelectedNodesTree(tree))}
+            contextsOfInterest={contexts}
           />
         </div>
       </div>

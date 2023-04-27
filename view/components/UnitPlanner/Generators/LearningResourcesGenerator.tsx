@@ -12,6 +12,7 @@ import { Tooltip2 } from '@blueprintjs/popover2';
 
 interface Props {
   syllabusContent: string[];
+  contextsOfInterest: string[];
 }
 
 const availableResources = [
@@ -24,9 +25,22 @@ const availableResources = [
   'Short business cases for student discussion',
   'List of discussion prompts',
   'Other'
-];
+] as const;
 
-const LearningResourcesGenerator = ({ syllabusContent }: Props) => {
+type AvailableResources = typeof availableResources[number];
+
+const promptAddition: Partial<Record<AvailableResources, string>> = {
+  'Teacher notes': 'Detailed and explained subject notes for teachers with ideas for possible classroom activities',
+  'Student notes': 'Bullet-pointed student notes with definitions for key terms',
+  'Fill-in-the-gap activity': '10 Fill in the gap sentences for key subject terms and add all answers at the very end ',
+  'Multiple Choice Questions': '10 Multiple choice questions with feedback to students',
+  'True or False Questions': 'True false exercise with 10 sentences with feedback to students',
+  'Real-life examples': 'Three Real-life examples (50 words each)',
+  'Short business cases for student discussion': 'Short business cases (100 words) for student discussion with 3 discussion prompts',
+  'List of discussion prompts': 'List of 7 classroom discussion questions (order them from easy to difficult according to Bloom\'s taxonomy)'
+};
+
+const LearningResourcesGenerator = ({ syllabusContent, contextsOfInterest }: Props) => {
   const { stream } = useRequests();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -35,18 +49,26 @@ const LearningResourcesGenerator = ({ syllabusContent }: Props) => {
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
   const [output, setOutput] = useState('');
 
-  const [selectedResource, setSelectedResource] = useState<string>();
+  const [selectedResource, setSelectedResource] = useState<AvailableResources>();
   const [customResource, setCustomResource] = useState('');
-
-  const resourceToCreate = selectedResource === 'Other' ? customResource : selectedResource;
 
   useEffect(() => {
     setSelectedResource(undefined);
     setCustomResource('');
   }, [isDrawerOpen]);
 
+  const resourceToCreate = selectedResource === 'Other' ? customResource : selectedResource;
+
   const onGenerate = async () => {
-    const query = `Create a ${resourceToCreate} for the topic "${syllabusContent.join(', ')}".`;
+    let query = `Create a ${resourceToCreate} for IB Business management topic "${syllabusContent.join(', ')}".`;
+
+    if (contextsOfInterest) {
+      query += ` Incorporate the contexts "${contextsOfInterest}".`;
+    }
+
+    if (resourceToCreate && promptAddition[resourceToCreate as AvailableResources]) {
+      query += ` Additional instructions: "${promptAddition[resourceToCreate as AvailableResources]}".`;
+    }
 
     const response = stream('/chat', { query, history: [] });
 
@@ -90,7 +112,7 @@ const LearningResourcesGenerator = ({ syllabusContent }: Props) => {
         <RadioGroup
           label='Please select a type of resource to create'
           selectedValue={selectedResource}
-          onChange={e => setSelectedResource(e.currentTarget.value)}
+          onChange={e => setSelectedResource(e.currentTarget.value as AvailableResources)}
         >
           {availableResources.map(resource => (
             <Radio label={resource} key={resource} value={resource} />

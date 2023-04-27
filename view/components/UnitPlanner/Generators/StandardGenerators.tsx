@@ -61,6 +61,22 @@ const generateCASConnectionsPrompt = (syllabusContent: string[], subjectAims: st
   return prompt;
 };
 
+const generateCaseStudyPrompt = (syllabusContent: string[], keyConcepts: string[], context: string[]) => {
+  let prompt = `Please generate a 200-word IB Business Management case study for my students to apply their knowledge on the topic of "${syllabusContent.join(', ')}".`;
+
+  if (keyConcepts.length > 0) {
+    prompt += ` Case-study should also describe the concepts of "${keyConcepts.join(', ')}".`;
+  }
+  if (context.length > 0) {
+    prompt += ` Incorporate contexts "${context.join(', ')}".`;
+  }
+
+  prompt += ` Make sure that the case study has a real-life business issue (dilemma) described with details explaining both side of the issue (dilemma). 
+    Don't add a description and summary of the case study at the end, don't state what is the issue/dilemma at the end.`;
+
+  return prompt;
+};
+
 interface Props {
   syllabusContent: string[];
   keyConcepts: string[];
@@ -96,6 +112,15 @@ const StandardGenerators = ({ syllabusContent, keyConcepts, subjectAims, context
       icon='build'
     >
       CAS Connections
+    </Button>
+
+    <Button
+      className='w-full justify-start'
+      onClick={() => onPromptGenerated(generateCaseStudyPrompt(syllabusContent, keyConcepts, contextOfInterest))}
+      icon='briefcase'
+      intent='primary'
+    >
+      Case Study
     </Button>
   </>;
 };

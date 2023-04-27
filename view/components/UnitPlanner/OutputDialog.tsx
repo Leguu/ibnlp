@@ -20,16 +20,16 @@ const OutputDialog = ({ loading, children, ...props }: Props) => {
 
         <div className='flex-grow' />
 
-        <Button icon='clipboard' onClick={() => {
-          navigator.clipboard.writeText(children as string);
-          AppToaster?.show({ message: 'Copied to clipboard', intent: 'success' });
-        }}>
-          Copy
-        </Button>
+        {!loading && <>
+          <Button icon='clipboard' onClick={() => {
+            navigator.clipboard.writeText(children as string);
+            AppToaster?.show({ message: 'Copied to clipboard', intent: 'success' });
+          }}>
+            Copy
+          </Button>
 
-        {!loading && (
           <Button icon='cross' className='ml-2' onClick={e => props.onClose?.(e)} />
-        )}
+        </>}
       </div>
       <DialogBody className='whitespace-pre-line'>
         {children}

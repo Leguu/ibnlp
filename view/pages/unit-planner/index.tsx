@@ -10,10 +10,11 @@ import SubjectAimsCard from '@/components/UnitPlanner/FormCards/SubjectAimsCard'
 import OutputDialog from '@/components/UnitPlanner/OutputDialog';
 import InquiryQuestionsGenerator from '@/components/UnitPlanner/Generators/InquiryQuestionsGenerator';
 import ATLGenerator from '@/components/UnitPlanner/Generators/ATLGenerator';
-import SyllabusContentCard, { syllabusToTree, syllabus, SyllabusContent } from '@/components/UnitPlanner/FormCards/SyllabusContentCard';
+import SyllabusContentCard, { syllabusToTree, SyllabusContent } from '@/components/UnitPlanner/FormCards/SyllabusContentCard';
 import { filterSelectedNodesTree } from '@/components/UnitPlanner/SyllabusTree';
 import LearningObjectivesGenerator from '@/components/UnitPlanner/Generators/LearningObjectivesGenerator';
 import LearningResourcesGenerator from '@/components/UnitPlanner/Generators/LearningResourcesGenerator';
+import { businessManagementSyllabus } from '@/components/UnitPlanner/FormCards/businessManagementSyllabus';
 
 type ChatRequest = {
   query: string;
@@ -40,7 +41,7 @@ const UnitPlannerPage: Page = () => {
   const [selectedConcepts, setSelectedConcepts] = useState<string[]>([]);
   const [contexts, setContexts] = useState<string[]>([]);
 
-  const [tree, setTree] = useState<TreeNodeInfo<SyllabusContent>[]>(syllabusToTree(syllabus));
+  const [tree, setTree] = useState<TreeNodeInfo<SyllabusContent>[]>(syllabusToTree(businessManagementSyllabus));
 
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
 

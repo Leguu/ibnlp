@@ -10,7 +10,6 @@ import (
 	"ibnlp/server/middleware"
 	"ibnlp/server/model"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -116,22 +115,16 @@ func GoogleCallback(c echo.Context) error {
 	db := c.Get("db").(*gorm.DB)
 
 	var user model.User
-	if err := db.First(&user, "username = ?", data.Email).Error; err != nil {
-		if !sess.AccessCodeVerified {
-			return c.String(http.StatusUnauthorized, "Access code not verified. Please register before trying to log in.")
-		}
-		user = model.User{
-			ID:       uuid.New().String(),
-			Username: data.Email,
-			Name:     data.Name,
-		}
-		if err := db.Create(&user).Error; err != nil {
-			return c.String(http.StatusUnauthorized, "Error creating user")
-		}
-	} else {
-		sess.AccessCodeVerified = true
-		sess.Save(c)
+	if err := db.First(&user, "Email = ?", data.Email).Error; err != nil {
+		return c.String(http.StatusUnauthorized, "You're not invited to use this app")
 	}
+
+	if user.InvitationPending {
+		user.Name = data.Name
+		user.InvitationPending = false
+	}
+
+	db.Save(&user)
 
 	sess.UserID = user.ID
 	sess.Save(c)

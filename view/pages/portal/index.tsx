@@ -5,6 +5,8 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Page } from '../_app';
 import { useRequests } from '@/utils/http';
 import { Popover2, Tooltip2 } from '@blueprintjs/popover2';
+import { useApi } from '@/api/api';
+import { User } from '@/api/types/model';
 
 interface Props {
   title: string;
@@ -35,10 +37,20 @@ const ProductCard = ({ title, description, href, disabled, hoverText }: Props) =
 const PortalPage: Page = () => {
   const { get } = useRequests();
 
+  const { getMe } = useApi();
+
+  const [me, setMe] = useState<User>();
+
+  useEffect(() => {
+    getMe({
+      onSuccess: setMe
+    });
+  }, [getMe]);
+
   const [searchAvailable, setSearchAvailable] = useState(false);
 
   useEffect(() => {
-    get('/search/ping', {
+    get('/search/ping', undefined, {
       onSuccess: () => {
         setSearchAvailable(true);
       },
@@ -76,6 +88,29 @@ const PortalPage: Page = () => {
         </>}
       />
 
+      {me?.IsAdmin && (
+        <ProductCard
+          title='Statistics'
+          href='/statistics'
+          description={(
+            <p className='text-gray-500'>
+              Admin Only. View statistics on usage.
+            </p>
+          )}
+        />
+      )}
+
+      {me?.IsAdmin && (
+        <ProductCard
+          title='User Management'
+          href='/user-management'
+          description={(
+            <p className='text-gray-500'>
+              Admin Only. Manage users.
+            </p>
+          )}
+        />
+      )}
     </div>
   );
 };

@@ -2,7 +2,6 @@ import ApplicationLayout from '@/layouts/ApplicationLayout';
 import { Page } from '../_app';
 import { Button, Card, Classes, Dialog, DialogBody, Divider, FormGroup, InputGroup, Label, TreeNodeInfo } from '@blueprintjs/core';
 import { useState } from 'react';
-import { useRequests } from '@/utils/http';
 import ContextsOfInterestCard from '@/components/UnitPlanner/FormCards/ContextsOfInterestCard';
 import StandardGenerators from '@/components/UnitPlanner/Generators/StandardGenerators';
 import KeyConceptsCard from '@/components/UnitPlanner/FormCards/KeyConceptsCard';
@@ -15,14 +14,7 @@ import { filterSelectedNodesTree } from '@/components/UnitPlanner/SyllabusTree';
 import LearningObjectivesGenerator from '@/components/UnitPlanner/Generators/LearningObjectivesGenerator';
 import LearningResourcesGenerator from '@/components/UnitPlanner/Generators/LearningResourcesGenerator';
 import { businessManagementSyllabus } from '@/components/UnitPlanner/FormCards/businessManagementSyllabus';
-
-type ChatRequest = {
-  query: string;
-  history: {
-    user: string;
-    assistant: string;
-  }[];
-};
+import { useApi } from '@/api/api';
 
 export const getTreeIds = (tree: TreeNodeInfo[]): string[] => {
   const ids: string[] = [];
@@ -36,7 +28,8 @@ export const getTreeIds = (tree: TreeNodeInfo[]): string[] => {
 };
 
 const UnitPlannerPage: Page = () => {
-  const requests = useRequests();
+  const { streamChat } = useApi();
+
   const [selectedAims, setSelectedAims] = useState<string[]>([]);
   const [selectedConcepts, setSelectedConcepts] = useState<string[]>([]);
   const [contexts, setContexts] = useState<string[]>([]);
@@ -48,14 +41,18 @@ const UnitPlannerPage: Page = () => {
   const [outputLoading, setOutputLoading] = useState(false);
   const [output, setOutput] = useState('');
 
+  const [abortController, setAbortController] = useState<AbortController>();
+
   const onSubmit = async (query: string) => {
     setOutput('');
     setOutputLoading(true);
     setIsOutputDialogOpen(true);
 
-    const request: ChatRequest = { query, history: [] };
+    const controller = new AbortController();
 
-    const stream = requests.stream('/chat', request);
+    setAbortController(controller);
+
+    const stream = streamChat({ query, history: [] }, { signal: controller.signal });
 
     for await (const data of stream) {
       setOutput(d => d + data);
@@ -65,7 +62,7 @@ const UnitPlannerPage: Page = () => {
   };
 
   return (
-    <div className='max-w-5xl w-full mx-auto lg:grid grid-cols-none lg:grid-cols-12 gap-4'>
+    <div className='pt-5 max-w-5xl w-full mx-auto lg:grid grid-cols-none lg:grid-cols-12 gap-4'>
       <div className='space-y-2 w-full col-span-9'>
         <SubjectAimsCard selectedAims={selectedAims} setSelectedAims={setSelectedAims} />
 
@@ -122,6 +119,7 @@ const UnitPlannerPage: Page = () => {
         isOpen={isOutputDialogOpen}
         loading={outputLoading}
         onClose={() => setIsOutputDialogOpen(false)}
+        controller={abortController}
       >
         {output}
       </OutputDialog>

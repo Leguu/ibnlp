@@ -8,6 +8,7 @@ import { SyllabusContent } from '../FormCards/SyllabusContentCard';
 import { notNullOrUndefined } from '@/utils/notNullOrUndefined';
 import OutputDialog from '../OutputDialog';
 import { Tooltip2 } from '@blueprintjs/popover2';
+import { useApi } from '@/api/api';
 
 
 const assessmentObjectiveCommandTerms: Record<number, string[]> = {
@@ -40,7 +41,7 @@ const deselect = <T,>(node: TreeNodeInfo<T>): TreeNodeInfo<T> => {
 };
 
 const LearningObjectivesGenerator = ({ tree }: Props) => {
-  const { stream } = useRequests();
+  const { streamChat } = useApi();
 
   const [innerTree, setInnerTree] = useState<TreeNodeInfo<SyllabusContent>[]>([]);
 
@@ -55,6 +56,8 @@ const LearningObjectivesGenerator = ({ tree }: Props) => {
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
   const [output, setOutput] = useState('');
 
+  const [abortController, setAbortController] = useState<AbortController>();
+
   const onGenerate = async () => {
     const selectedNodes = filterSelectedNodesTree(innerTree);
     const selectedIds = getTreeIds(selectedNodes);
@@ -67,7 +70,10 @@ const LearningObjectivesGenerator = ({ tree }: Props) => {
     Your task is to write the learning outcomes for the topics of "${selectedIds.join(', ')}". 
     You must start each learning objective with one of the "${commandTerms.join(', ')}" below. `;
 
-    const response = stream('/chat', { query, history: [] });
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    const response = streamChat({ query, history: [] }, { signal: controller.signal, });
 
     setIsDrawerOpen(false);
     setIsOutputDialogOpen(true);
@@ -101,6 +107,7 @@ const LearningObjectivesGenerator = ({ tree }: Props) => {
       isOpen={isOutputDialogOpen}
       onClose={() => setIsOutputDialogOpen(false)}
       loading={isOutputLoading}
+      controller={abortController}
     >
       {output}
     </OutputDialog>

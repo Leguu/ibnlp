@@ -22,13 +22,9 @@ func GetSessionValues(c echo.Context) SessionValues {
 	if sess.Values["OauthState"] == nil {
 		sess.Values["OauthState"] = ""
 	}
-	if sess.Values["AccessCodeVerified"] == nil {
-		sess.Values["AccessCodeVerified"] = false
-	}
 	return SessionValues{
-		UserID:             sess.Values["UserID"].(string),
-		OauthState:         sess.Values["OauthState"].(string),
-		AccessCodeVerified: sess.Values["AccessCodeVerified"].(bool),
+		UserID:     sess.Values["UserID"].(string),
+		OauthState: sess.Values["OauthState"].(string),
 	}
 }
 
@@ -39,6 +35,5 @@ func (values *SessionValues) Save(c echo.Context) error {
 	}
 	sess.Values["UserID"] = values.UserID
 	sess.Values["OauthState"] = values.OauthState
-	sess.Values["AccessCodeVerified"] = values.AccessCodeVerified
 	return sess.Save(c.Request(), c.Response())
 }

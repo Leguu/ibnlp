@@ -1,6 +1,8 @@
+import { useApi } from '@/api/api';
 import { useRequests } from '@/utils/http';
 import { AppToaster } from '@/utils/toaster';
 import { Icon, Button, Divider, Navbar as BPNavbar, OverflowList } from "@blueprintjs/core";
+import { log } from 'console';
 import Link from "next/link";
 import { useRouter } from 'next/router';
 import React from "react";
@@ -11,10 +13,11 @@ export interface ApplicationNavbarProps {
 
 export default function ApplicationNavbar({ pageName }: ApplicationNavbarProps) {
   const router = useRouter();
-  const { get } = useRequests();
 
-  const logout = () => {
-    get('/login/logout', {
+  const { logout } = useApi();
+
+  const onLogout = () => {
+    logout({
       onSuccess: () => {
         router.push('/');
         AppToaster?.show({
@@ -57,7 +60,7 @@ export default function ApplicationNavbar({ pageName }: ApplicationNavbarProps) 
         <Divider className='h-6 mx-3 mr-5 hidden md:block' />
       </>}
 
-      <Button icon='log-out' onClick={logout}>
+      <Button icon='log-out' onClick={onLogout}>
         Logout
       </Button>
     </BPNavbar>

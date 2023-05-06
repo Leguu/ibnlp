@@ -2,6 +2,7 @@ import { Button, Checkbox, Classes, Drawer } from '@blueprintjs/core';
 import { useState } from 'react';
 import OutputDialog from '../OutputDialog';
 import { useRequests } from '@/utils/http';
+import { useApi } from '@/api/api';
 
 interface Props {
   syllabusContent: string[];
@@ -16,7 +17,7 @@ const approachesToLearning = [
 ];
 
 const ATLGenerator = ({ syllabusContent }: Props) => {
-  const { stream } = useRequests();
+  const { streamChat } = useApi();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -25,6 +26,8 @@ const ATLGenerator = ({ syllabusContent }: Props) => {
   const [output, setOutput] = useState('');
 
   const [selectedATLs, setSelectedATLs] = useState<string[]>([]);
+
+  const [abortController, setAbortController] = useState<AbortController>();
 
   const onGenerate = async () => {
     setIsDrawerOpen(false);
@@ -35,7 +38,10 @@ const ATLGenerator = ({ syllabusContent }: Props) => {
     let prompt = `you are IB Business management teacher planning the development of ATL skills when studying "${syllabusContent.join(', ')}". 
     Suggest how "${selectedATLs.join(', ')}" can be taught (through learning activities) and assessed with rubric (generate it with three levels).`;
 
-    const output = stream('/chat', { query: prompt, history: [] });
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    const output = streamChat({ query: prompt, history: [] }, { signal: controller.signal });
 
     for await (const data of output) {
       setOutput(d => d + data);

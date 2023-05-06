@@ -9,6 +9,7 @@ import { SyllabusContent } from '../FormCards/SyllabusContentCard';
 import { notNullOrUndefined } from '@/utils/notNullOrUndefined';
 import OutputDialog from '../OutputDialog';
 import { Tooltip2 } from '@blueprintjs/popover2';
+import { useApi } from '@/api/api';
 
 interface Props {
   syllabusContent: string[];
@@ -41,7 +42,7 @@ const promptAddition: Partial<Record<AvailableResources, string>> = {
 };
 
 const LearningResourcesGenerator = ({ syllabusContent, contextsOfInterest }: Props) => {
-  const { stream } = useRequests();
+  const { streamChat } = useApi();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -51,6 +52,8 @@ const LearningResourcesGenerator = ({ syllabusContent, contextsOfInterest }: Pro
 
   const [selectedResource, setSelectedResource] = useState<AvailableResources>();
   const [customResource, setCustomResource] = useState('');
+
+  const [abortController, setAbortController] = useState<AbortController>();
 
   useEffect(() => {
     setSelectedResource(undefined);
@@ -70,7 +73,10 @@ const LearningResourcesGenerator = ({ syllabusContent, contextsOfInterest }: Pro
       query += ` Additional instructions: "${promptAddition[resourceToCreate as AvailableResources]}".`;
     }
 
-    const response = stream('/chat', { query, history: [] });
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    const response = streamChat({ query, history: [] }, { signal: controller.signal });
 
     setIsDrawerOpen(false);
     setIsOutputDialogOpen(true);
@@ -98,6 +104,7 @@ const LearningResourcesGenerator = ({ syllabusContent, contextsOfInterest }: Pro
       isOpen={isOutputDialogOpen}
       onClose={() => setIsOutputDialogOpen(false)}
       loading={isOutputLoading}
+      controller={abortController}
     >
       {output}
     </OutputDialog>

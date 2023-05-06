@@ -183,14 +183,14 @@ export const businessManagementSyllabus: SyllabusContent[] = [{
           { unit: 'Return on capital employed (ROCE)', depthOfTeaching: 2 }
         ]
       },
-      { unit: 'Possible strategies to improve these ratios', depthOfTeaching: 3 },
+      { unit: 'Possible strategies to improve profitability ratios', depthOfTeaching: 3 },
       {
         unit: 'Liquidity ratios', depthOfTeaching: 2, topics: [
           { unit: 'Current ratio', depthOfTeaching: 2 },
           { unit: 'Acid test (quick) ratio', depthOfTeaching: 2 }
         ]
       },
-      { unit: 'Possible strategies to improve these ratios', depthOfTeaching: 3 }
+      { unit: 'Possible strategies to improve liquidity ratios', depthOfTeaching: 3 }
     ]
   }, {
     unit: 'Efficiency ratio analysis (HL only)',
@@ -203,7 +203,7 @@ export const businessManagementSyllabus: SyllabusContent[] = [{
           { unit: 'Gearing ratio', depthOfTeaching: 2 }
         ]
       },
-      { unit: 'Possible strategies to improve these ratios', depthOfTeaching: 3 },
+      { unit: 'Possible strategies to improve efficiency ratios', depthOfTeaching: 3 },
       { unit: 'Insolvency versus bankruptcy', depthOfTeaching: 2 }
     ]
   }, {

@@ -1,0 +1,18 @@
+packages:
+  - path: 'ibnlp/server/model'
+    output_path: 'view/api/types/model.ts'
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      null.String: 'null | string'
+      null.Bool: 'null | boolean'
+      uuid.UUID: 'string /* uuid */'
+      uuid.NullUUID: 'null | string /* uuid */'
+
+  - path: 'ibnlp/server/controllers'
+    output_path: 'view/api/types/controllers.ts'
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      null.String: 'null | string'
+      null.Bool: 'null | boolean'
+      uuid.UUID: 'string /* uuid */'
+      uuid.NullUUID: 'null | string /* uuid */'

@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 
 	"ibnlp/server/middleware"
+	"ibnlp/server/model"
 	"ibnlp/server/nlp"
 
 	"github.com/labstack/echo/v4"
@@ -19,7 +21,7 @@ var chatRoutes = route{
 	},
 }
 
-type chatRequest struct {
+type ApiChatRequest struct {
 	Query   string `json:"query"`
 	History []struct {
 		User      string `json:"user"`
@@ -27,7 +29,7 @@ type chatRequest struct {
 	} `json:"history"`
 }
 
-func (request chatRequest) constructGPTChatRequest() (result nlp.ChatGPTRequest) {
+func (request ApiChatRequest) constructGPTChatRequest() (result nlp.ChatGPTRequest) {
 	for _, history := range request.History {
 		result.Messages = append(
 			result.Messages,
@@ -56,8 +58,19 @@ func (request chatRequest) constructGPTChatRequest() (result nlp.ChatGPTRequest)
 
 func apiChat(c echo.Context) error {
 	response := c.Response()
+	context := c.Request().Context()
 
-	var request chatRequest
+	db := c.Get("db").(*gorm.DB)
+
+	userId := middleware.GetSessionValues(c).UserID
+	var user model.User
+	result := db.Preload("ChatRequests").First(&user, "id = ?", userId)
+
+	if result.Error != nil {
+		return c.String(http.StatusUnauthorized, "You are not authorized to access this resource.")
+	}
+
+	var request ApiChatRequest
 	if err := c.Bind(&request); err != nil {
 		return c.String(http.StatusBadRequest, "An error occured while parsing your request, please contact your administrator.")
 	}
@@ -66,7 +79,7 @@ func apiChat(c echo.Context) error {
 
 	openAiProvider := nlp.ChatGPTProvider{}
 
-	responses, err := openAiProvider.GetResponse(chatRequest)
+	responses, err := openAiProvider.GetResponse(chatRequest, context)
 	if err != nil {
 		log.Error().Err(err).Msg("error while getting response from openai")
 		return c.String(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
@@ -74,11 +87,12 @@ func apiChat(c echo.Context) error {
 
 	totalResponse := nlp.StreamResponsesToWriter(response.Writer, responses)
 
-	session := middleware.GetSessionValues(c)
-	log.Info().Str("query", request.Query).
-		Str("user", session.UserID).
-		Str("response", totalResponse).
-		Msg("executed search")
+	user.ChatRequests = append(user.ChatRequests, model.UserChatRequest{
+		Request:  request.Query,
+		Response: totalResponse,
+	})
+
+	db.Save(&user)
 
 	return c.NoContent(http.StatusOK)
 }

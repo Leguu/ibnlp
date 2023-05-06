@@ -4,6 +4,7 @@ import { generateConceptualUnderstandingsPrompt } from './StandardGenerators';
 import { useState } from 'react';
 import OutputDialog from '../OutputDialog';
 import wait from '@/utils/wait';
+import { useApi } from '@/api/api';
 
 const generateInquiryQuestionsPrompt = (syllabusContent: string[], conceptualUnderstandings: string) => {
   let prompt = `You are IB Business management teacher that helps me to plan inquiry-based learning unit. 
@@ -44,13 +45,15 @@ interface Props {
 }
 
 const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, contextOfInterest }: Props) => {
-  const { stream } = useRequests();
+  const { streamChat } = useApi();
 
   const [inquiryQuestionsLoading, setInquiryQuestionsLoading] = useState<boolean>(false);
   const [conceptualUnderstandingsLoading, setConceptualUnderstandingsLoading] = useState<boolean>(false);
   const [inquiryQuestions, setInquiryQuestions] = useState<string>();
 
   const [outputDialogOpen, setOutputDialogOpen] = useState<boolean>(false);
+
+  const [abortController, setAbortController] = useState<AbortController>();
 
   const onInquiryClicked = async () => {
     setOutputDialogOpen(true);
@@ -61,7 +64,7 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
     let conceptualUnderstandings = '';
     {
       setConceptualUnderstandingsLoading(true);
-      const output = stream('/chat', { query: conceptualUnderstandingsPrompt, history: [] });
+      const output = streamChat({ query: conceptualUnderstandingsPrompt, history: [] });
 
       for await (const chunk of output) {
         conceptualUnderstandings += chunk;
@@ -75,7 +78,11 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
     const inquiryQuestionsPrompt = generateInquiryQuestionsPrompt(syllabusContent, conceptualUnderstandings);
 
     setInquiryQuestionsLoading(true);
-    const output = stream('/chat', { query: inquiryQuestionsPrompt, history: [] });
+
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    const output = streamChat({ query: inquiryQuestionsPrompt, history: [] }, { signal: controller.signal });
 
     let text = '';
     for await (const chunk of output) {
@@ -100,6 +107,7 @@ const InquiryQuestionsGenerator = ({ syllabusContent, keyConcepts, subjectAims, 
       isOpen={outputDialogOpen}
       onClose={() => setOutputDialogOpen(false)}
       loading={inquiryQuestionsLoading || conceptualUnderstandingsLoading}
+      controller={abortController}
     >
       {conceptualUnderstandingsLoading
         ? 'Please wait, generating prerequisites...'

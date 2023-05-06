@@ -31,11 +31,11 @@ var searchRoutes = route{
 
 func GetPing(c echo.Context) error {
 	pythonSearcher, err := search.NewPythonSearcher()
-	if (err != nil) {
+	if err != nil {
 		return c.NoContent(http.StatusOK)
 	}
 	resp, err := http.Get(pythonSearcher.Url + "ping")
-	if (err != nil) {
+	if err != nil {
 		return c.NoContent(http.StatusServiceUnavailable)
 	}
 
@@ -71,17 +71,17 @@ func getMessagesUpToCharacterLimit(results []search.SearchResult, charLimit int)
 	return messages
 }
 
-const IB_PROMPT string = `You are an assistant for the International Baccalaureate organisation.
+const ib_prompt string = `You are an assistant for the International Baccalaureate organisation.
 				You will be given pages from IB files, and you must answer the user's query USING ONLY THE PAGES, or say 'I don't know' if you can't.
 				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
 				Cite page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
 
-const STANDARD_PROMPT string = `You are an assistant who has access to files.
+const standard_prompt string = `You are an assistant who has access to files.
 				You will be given pages from those files, and you must answer the user's query USING ONLY THE PAGES, or say 'I don't know' if you can't.
 				If you can't answer, suggest different similar questions, don't answer questions that you don't have the information necessary.
 				Cite the file name and page numbers when answering. Break up your answer to multiple paragraphs if it's too long.`
 
-type searchRequest struct {
+type ApisearchRequest struct {
 	Query       string `json:"query"`
 	SearchQuery string `json:"searchQuery"`
 	History     []struct {
@@ -90,10 +90,10 @@ type searchRequest struct {
 	} `json:"history"`
 }
 
-func constructGPTSearchRequest(request searchRequest, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
+func constructGPTSearchRequest(request ApisearchRequest, results []search.SearchResult) (chatRequest nlp.ChatGPTRequest) {
 	chatRequest.Messages = append(chatRequest.Messages, nlp.ChatGPTMessage{
 		Role:    "system",
-		Content: STANDARD_PROMPT,
+		Content: standard_prompt,
 	})
 
 	if len(results) >= 2 {
@@ -157,29 +157,31 @@ func doSearch(searcher search.Searcher, searchQuery string) ([]search.SearchResu
 
 func PostSearch(c echo.Context) error {
 	response := c.Response()
+	request := c.Request()
+	context := request.Context()
 
-	var request searchRequest
-	if err := c.Bind(&request); err != nil {
+	var searchRequest ApisearchRequest
+	if err := c.Bind(&searchRequest); err != nil {
 		return c.String(http.StatusBadRequest, "An error occured while parsing your request, please contact your administrator.")
 	}
 
 	var results []search.SearchResult
-	if request.SearchQuery != "" {
+	if searchRequest.SearchQuery != "" {
 		searcher := c.Get("search").(search.Searcher)
 
 		var errorMessage string
-		results, errorMessage = doSearch(searcher, request.SearchQuery)
+		results, errorMessage = doSearch(searcher, searchRequest.SearchQuery)
 
 		if results == nil {
 			return c.String(http.StatusInternalServerError, errorMessage)
 		}
 	}
 
-	chatRequest := constructGPTSearchRequest(request, results)
+	chatRequest := constructGPTSearchRequest(searchRequest, results)
 
 	openAiProvider := nlp.ChatGPTProvider{}
 
-	responses, err := openAiProvider.GetResponse(chatRequest)
+	responses, err := openAiProvider.GetResponse(chatRequest, context)
 	if err != nil {
 		log.Error().Err(err).Msg("error while getting response from openai")
 		return c.String(http.StatusInternalServerError, "An error occured while getting a response from OpenAI, please try again later.")
@@ -189,8 +191,8 @@ func PostSearch(c echo.Context) error {
 
 	session := middleware.GetSessionValues(c)
 	log.Info().
-		Str("query", request.Query).
-		Str("searchQuery", request.SearchQuery).
+		Str("query", searchRequest.Query).
+		Str("searchQuery", searchRequest.SearchQuery).
 		Str("user", session.UserID).
 		Str("response", totalResponse).
 		Msg("executed search")

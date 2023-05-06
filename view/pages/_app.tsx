@@ -8,6 +8,7 @@ import { ReactElement, ReactNode } from 'react';
 
 export type Page<P = {}, IP = P> = NextPage<P, IP> & {
   authenticated?: boolean;
+  requireAdmin?: boolean;
   getLayout?: (page: ReactElement) => ReactNode;
 };
 
@@ -19,7 +20,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const getLayout = Component.getLayout || ((page: ReactNode) => page);
 
   const makeAuthenticated: (page: ReactNode) => ReactNode = (page) => Component.authenticated ? (
-    <LoginProtector>
+    <LoginProtector requireAdmin={Component.requireAdmin}>
       {page}
     </LoginProtector>
   ) : page;

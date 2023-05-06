@@ -3,6 +3,7 @@ package nlp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -53,7 +54,7 @@ type ChatGPTResponse struct {
 	} `json:"choices"`
 }
 
-func makeRequest(input ChatGPTRequest) (*http.Response, error) {
+func makeRequest(input ChatGPTRequest) (*http.Request, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	marshalled, err := json.Marshal(input)
@@ -69,7 +70,7 @@ func makeRequest(input ChatGPTRequest) (*http.Response, error) {
 	request.Header.Set("Authorization", "Bearer "+openAIKey)
 	request.Header.Set("Content-Type", "application/json")
 
-	return http.DefaultClient.Do(request)
+	return request, nil
 }
 
 // Will stream all response in the channel into the writer in event-stream format,
@@ -97,7 +98,6 @@ func StreamResponsesToWriter(writer io.Writer, responses <-chan ChatGPTResponse)
 
 func streamResponseToChannel(body io.ReadCloser, out chan<- ChatGPTResponse) {
 	reader := bufio.NewReader(body)
-	defer body.Close()
 	defer close(out)
 
 	for {
@@ -138,20 +138,28 @@ func streamResponseToChannel(body io.ReadCloser, out chan<- ChatGPTResponse) {
 	}
 }
 
-func (c ChatGPTProvider) GetResponse(input ChatGPTRequest) (<-chan ChatGPTResponse, error) {
+func (c ChatGPTProvider) GetResponse(input ChatGPTRequest, ctx context.Context) (<-chan ChatGPTResponse, error) {
 	if input.Model == "" {
 		input.Model = defaultModel
 	}
 
 	input.Stream = true
 
-	response, err := makeRequest(input)
+	request, err := makeRequest(input)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make(chan ChatGPTResponse)
-	go streamResponseToChannel(response.Body, out)
+	request = request.WithContext(ctx)
 
-	return out, nil
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	responseStream := make(chan ChatGPTResponse)
+
+	go streamResponseToChannel(response.Body, responseStream)
+
+	return responseStream, nil
 }

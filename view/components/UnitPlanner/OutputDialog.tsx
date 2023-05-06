@@ -2,11 +2,12 @@ import { AppToaster } from '@/utils/toaster';
 import { Button, Classes, Dialog, DialogBody, DialogProps } from '@blueprintjs/core';
 
 interface Props extends DialogProps {
+  controller?: AbortController;
   loading?: boolean;
   children?: string;
 }
 
-const OutputDialog = ({ loading, children, ...props }: Props) => {
+const OutputDialog = ({ loading, children, controller, ...props }: Props) => {
   return (
     <Dialog
       canOutsideClickClose={!loading}
@@ -30,6 +31,10 @@ const OutputDialog = ({ loading, children, ...props }: Props) => {
 
           <Button icon='cross' className='ml-2' onClick={e => props.onClose?.(e)} />
         </>}
+
+        {(loading && controller) && (
+          <Button icon='cross' className='ml-2' onClick={() => controller.abort()} />
+        )}
       </div>
       <DialogBody className='whitespace-pre-line'>
         {children}

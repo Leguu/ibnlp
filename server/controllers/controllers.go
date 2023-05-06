@@ -25,10 +25,12 @@ type route struct {
 var routes = route{
 	children: []route{
 		chatRoutes,
-		registerRoutes,
 		oauthRoutes,
-		loginRoutes,
+		logoutRoutes,
 		searchRoutes,
+		statsRoutes,
+		meRoute,
+		adminRoutes,
 	},
 }
 
@@ -57,6 +59,28 @@ func authenticatedRoute(handler echo.HandlerFunc) echo.HandlerFunc {
 		var user model.User
 		if err := db.First(&user, "id = ?", sess.UserID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.String(http.StatusUnauthorized, "Not logged in")
+		}
+
+		return handler(c)
+	}
+}
+
+func adminRoute(handler echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess := middleware.GetSessionValues(c)
+		db := c.Get("db").(*gorm.DB)
+
+		if sess.UserID == "" {
+			return c.String(http.StatusUnauthorized, "Not logged in")
+		}
+
+		var user model.User
+		if err := db.First(&user, "id = ?", sess.UserID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusUnauthorized, "Not logged in")
+		}
+
+		if !user.IsAdmin {
+			return c.String(http.StatusUnauthorized, "Not an admin")
 		}
 
 		return handler(c)

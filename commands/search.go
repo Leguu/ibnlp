@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"context"
+
 	"ibnlp/server/nlp"
 
 	"github.com/urfave/cli/v2"
@@ -29,7 +31,7 @@ func SearchCommand(cli *cli.Context) error {
 		Messages: []nlp.ChatGPTMessage{
 			{Role: "user", Content: cli.Args().First()},
 		},
-	})
+	}, context.Background())
 	if err != nil {
 		return err
 	}

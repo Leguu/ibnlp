@@ -30,7 +30,7 @@ const Home: Page = () => {
 
   const router = useRouter();
   useEffect(() => {
-    get('/search/ping', {
+    get('/search/ping', undefined, {
       handleErrors: false,
       onError: () => {
         AppToaster?.show({

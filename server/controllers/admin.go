@@ -49,6 +49,23 @@ func InviteUser(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Invalid request")
 	}
 
+	var existingUser model.User
+	if result := db.Unscoped().First(&existingUser, "email = ?", inviteRequest.Email); result.Error == nil {
+		if existingUser.Deleted.Valid {
+			if result := db.Unscoped().Model(&existingUser).Update("deleted", nil); result.Error != nil {
+				return c.String(http.StatusInternalServerError, "Error inviting user")
+			}
+
+			return c.JSON(http.StatusOK, existingUser)
+		}
+
+		if existingUser.InvitationPending {
+			return c.String(http.StatusBadRequest, "User already invited")
+		}
+
+		return c.String(http.StatusBadRequest, "User already exists")
+	}
+
 	user := model.User{
 		ID:                uuid.New().String(),
 		Email:             inviteRequest.Email,

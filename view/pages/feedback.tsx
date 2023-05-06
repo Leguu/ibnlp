@@ -24,10 +24,12 @@ const FeedbackPage: Page = () => {
 
   const [users, setUsers] = useState<User[]>([]);
   useEffect(() => {
+    if (!me?.IsAdmin) return;
+
     getUsers({
       onSuccess: setUsers,
     });
-  }, [getUsers]);
+  }, [getUsers, me?.IsAdmin]);
 
   useEffect(() => {
     if (!me?.IsAdmin) return;

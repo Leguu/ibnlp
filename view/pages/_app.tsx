@@ -27,6 +27,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
 
   return <>
     <Head>
+      <title>Semantic Inquiry</title>
       <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"></meta>
       <link rel="icon" href="/favicon.svg" className='favicon' style={{ fill: 'white' }} />
     </Head>

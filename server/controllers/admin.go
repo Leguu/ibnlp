@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"ibnlp/server/middleware"
 	"ibnlp/server/model"
 
 	"github.com/google/uuid"
@@ -82,9 +83,19 @@ func InviteUser(c echo.Context) error {
 func DeleteUser(c echo.Context) error {
 	db := c.Get("db").(*gorm.DB)
 
+	session := middleware.GetSessionValues(c)
+
 	var user model.User
 	if result := db.First(&user, "id = ?", c.Param("id")); result.Error != nil {
 		return c.String(http.StatusInternalServerError, "Error fetching user")
+	}
+
+	if user.IsAdmin {
+		return c.String(http.StatusBadRequest, "You cannot delete an admin user")
+	}
+
+	if session.UserID == user.ID {
+		return c.String(http.StatusBadRequest, "You cannot delete yourself")
 	}
 
 	if result := db.Delete(&user); result.Error != nil {

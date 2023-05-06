@@ -17,6 +17,13 @@ type UserChatRequest struct {
 	Response  string
 }
 
+type UserFeedback struct {
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	Feedback  string
+	UserId    string
+}
+
 type User struct {
 	ID                string `json:"id" gorm:"uniqueIndex"`
 	Name              string
@@ -27,6 +34,7 @@ type User struct {
 	IsAdmin           bool
 	InvitationPending bool
 	Deleted           gorm.DeletedAt
+	Feedback          []UserFeedback
 }
 
 func (user User) MarshalZerologObject(e *zerolog.Event) {

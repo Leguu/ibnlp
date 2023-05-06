@@ -21,6 +21,12 @@ export interface UserChatRequest {
   Request: string;
   Response: string;
 }
+export interface UserFeedback {
+  ID: number /* uint */;
+  CreatedAt: string /* RFC3339 */;
+  Feedback: string;
+  UserId: string;
+}
 export interface User {
   id: string;
   Name: string;
@@ -31,4 +37,5 @@ export interface User {
   IsAdmin: boolean;
   InvitationPending: boolean;
   Deleted: any /* gorm.DeletedAt */;
+  Feedback: UserFeedback[];
 }

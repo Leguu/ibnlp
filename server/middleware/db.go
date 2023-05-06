@@ -11,6 +11,7 @@ func migrateDb(db *gorm.DB) {
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.UserChatRequest{})
 	db.AutoMigrate(&model.Organisation{})
+	db.AutoMigrate(&model.UserFeedback{})
 }
 
 func RegisterDbMiddleware(db *gorm.DB) func(echo.HandlerFunc) echo.HandlerFunc {

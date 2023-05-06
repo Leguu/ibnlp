@@ -88,7 +88,7 @@ StatisticsPage.authenticated = true;
 StatisticsPage.requireAdmin = true;
 StatisticsPage.getLayout = (page: ReactNode) => {
   return (
-    <ApplicationLayout pageName='Portal'>
+    <ApplicationLayout pageName='Statistics'>
       {page}
     </ApplicationLayout>
   );

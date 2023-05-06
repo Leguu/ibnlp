@@ -31,6 +31,7 @@ var routes = route{
 		statsRoutes,
 		meRoute,
 		adminRoutes,
+		feedbackRoutes,
 	},
 }
 

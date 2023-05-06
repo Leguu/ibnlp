@@ -77,6 +77,16 @@ const PortalPage: Page = () => {
       />
 
       <ProductCard
+        title='Feedback'
+        href='/feedback'
+        description={<>
+          <p className='text-gray-500'>
+            Have feedback? We would love to hear it!
+          </p>
+        </>}
+      />
+
+      <ProductCard
         title='Semantic Search'
         href='/search'
         disabled={!searchAvailable}

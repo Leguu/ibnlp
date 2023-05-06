@@ -15,6 +15,7 @@ import LearningObjectivesGenerator from '@/components/UnitPlanner/Generators/Lea
 import LearningResourcesGenerator from '@/components/UnitPlanner/Generators/LearningResourcesGenerator';
 import { businessManagementSyllabus } from '@/components/UnitPlanner/FormCards/businessManagementSyllabus';
 import { useApi } from '@/api/api';
+import Link from 'next/link';
 
 export const getTreeIds = (tree: TreeNodeInfo[]): string[] => {
   const ids: string[] = [];
@@ -112,6 +113,12 @@ const UnitPlannerPage: Page = () => {
             syllabusContent={getTreeIds(filterSelectedNodesTree(tree))}
             contextsOfInterest={contexts}
           />
+
+          <div className='pt-2'>
+            <Link href='/feedback'>
+              Have feedback?
+            </Link>
+          </div>
         </div>
       </div>
 

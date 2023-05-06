@@ -23,6 +23,13 @@ export interface ApiChatRequest {
 
 
 //////////
+// source: feedback.go
+
+export interface ApiFeedbackRequest {
+  feedback: string;
+}
+
+//////////
 // source: oauth.go
 
 export interface GoogleUser {

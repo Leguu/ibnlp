@@ -1,6 +1,6 @@
 import { RequestOptions, useRequests } from '@/utils/http';
-import { ApiChatRequest, ApiInviteUserRequest, ApiStatsRequest } from './types/controllers';
-import { User, UserChatRequest } from './types/model';
+import { ApiChatRequest, ApiFeedbackRequest, ApiInviteUserRequest, ApiStatsRequest } from './types/controllers';
+import { User, UserChatRequest, UserFeedback } from './types/model';
 import { useCallback } from 'react';
 
 export const useApi = () => {
@@ -22,5 +22,11 @@ export const useApi = () => {
 
   const logout = useCallback((options?: RequestOptions<void>) => get('/logout', undefined, options), [get]);
 
-  return { streamChat, getMe, getStats, getUsers, logout, inviteUser, deleteUser };
+  const addFeedback = useCallback((feedback: ApiFeedbackRequest, options?: RequestOptions<void>) => post('/feedback', feedback, options), [post]);
+
+  const getFeedback = useCallback((options?: RequestOptions<UserFeedback[]>) => get('/feedback', undefined, options), [get]);
+
+  const deleteFeedback = useCallback((id: number, options?: RequestOptions<void>) => deleteRequest(`/feedback/${id}`, undefined, options), [deleteRequest]);
+
+  return { streamChat, getMe, getStats, getUsers, logout, inviteUser, deleteUser, addFeedback, getFeedback, deleteFeedback };
 };

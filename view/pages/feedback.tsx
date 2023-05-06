@@ -80,37 +80,39 @@ const FeedbackPage: Page = () => {
         </div>
       </Callout>
 
-      <Callout>
-        <H3>
-          All feedback (Admin)
-        </H3>
+      {me?.IsAdmin && (
+        <Callout>
+          <H3>
+            All feedback (Admin)
+          </H3>
 
-        <div className='space-y-4 pt-4'>
-          {allFeedback.map(f => {
-            const user = users.find(u => u.id === f.UserId);
-            return (
-              <div key={f.ID} className='flex flex-row justify-between'>
-                <div>
-                  <p>
-                    {f.Feedback}
-                  </p>
-                  <p className='text-xs text-gray-500'>
-                    {`${dayjs(f.CreatedAt).format('DD/MM/YYYY HH:mm')} by ${user?.Name} <${user?.Email}>`}
-                  </p>
+          <div className='space-y-4 pt-4'>
+            {allFeedback.map(f => {
+              const user = users.find(u => u.id === f.UserId);
+              return (
+                <div key={f.ID} className='flex flex-row justify-between'>
+                  <div>
+                    <p>
+                      {f.Feedback}
+                    </p>
+                    <p className='text-xs text-gray-500'>
+                      {`${dayjs(f.CreatedAt).format('DD/MM/YYYY HH:mm')} by ${user?.Name} <${user?.Email}>`}
+                    </p>
+                  </div>
+
+                  <Button icon='remove' onClick={() => onRemove(f.ID)} />
                 </div>
+              );
+            })}
 
-                <Button icon='remove' onClick={() => onRemove(f.ID)} />
-              </div>
-            );
-          })}
-
-          {allFeedback.length === 0 && (
-            <p>
-              No feedback yet
-            </p>
-          )}
-        </div>
-      </Callout>
+            {allFeedback.length === 0 && (
+              <p>
+                No feedback yet
+              </p>
+            )}
+          </div>
+        </Callout>
+      )}
     </div>
   );
 };

@@ -38,7 +38,7 @@ const promptAddition: Partial<Record<AvailableResources, string>> = {
   'True or False Questions': 'True false exercise with 10 sentences with feedback to students',
   'Real-life examples': 'Three Real-life examples (50 words each)',
   'Short business cases for student discussion': 'Short business cases (100 words) for student discussion with 3 discussion prompts',
-  'List of discussion prompts': 'List of 7 classroom discussion questions (order them from easy to difficult according to Bloom\'s taxonomy)'
+  'List of discussion prompts': 'List of 10 classroom discussion questions (order them from easy to difficult according to Bloom\'s taxonomy)'
 };
 
 const LearningResourcesGenerator = ({ syllabusContent, contextsOfInterest }: Props) => {

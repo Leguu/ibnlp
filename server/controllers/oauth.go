@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 
 	"ibnlp/server/middleware"
 	"ibnlp/server/model"
@@ -114,9 +115,11 @@ func GoogleCallback(c echo.Context) error {
 
 	db := c.Get("db").(*gorm.DB)
 
+	lowerEmail := strings.ToLower(data.Email)
+
 	var user model.User
-	if err := db.First(&user, "Email = ?", data.Email).Error; err != nil {
-		return c.String(http.StatusUnauthorized, "You're not invited to use this app")
+	if err := db.First(&user, "Email = ?", lowerEmail).Error; err != nil {
+		return c.String(http.StatusUnauthorized, "You're not invited to use this app. Email used: "+data.Email)
 	}
 
 	if user.InvitationPending {

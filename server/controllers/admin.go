@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"ibnlp/server/middleware"
 	"ibnlp/server/model"
@@ -50,8 +51,10 @@ func InviteUser(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Invalid request")
 	}
 
+	lowerEmail := strings.ToLower(inviteRequest.Email)
+
 	var existingUser model.User
-	if result := db.Unscoped().First(&existingUser, "email = ?", inviteRequest.Email); result.Error == nil {
+	if result := db.Unscoped().First(&existingUser, "email = ?", lowerEmail); result.Error == nil {
 		if existingUser.Deleted.Valid {
 			if result := db.Unscoped().Model(&existingUser).Update("deleted", nil); result.Error != nil {
 				return c.String(http.StatusInternalServerError, "Error inviting user")
@@ -69,7 +72,7 @@ func InviteUser(c echo.Context) error {
 
 	user := model.User{
 		ID:                uuid.New().String(),
-		Email:             inviteRequest.Email,
+		Email:             lowerEmail,
 		InvitationPending: true,
 	}
 

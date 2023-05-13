@@ -118,7 +118,7 @@ const ChatBox = ({ initialResponse, loading: _loading }: Props) => {
           large
           type='search'
           leftIcon='search'
-          placeholder={`Ask the AI a question...`}
+          placeholder='How should I modify this answer?'
           disabled={loading}
           value={query}
           onChange={e => setQuery(e.target.value)}

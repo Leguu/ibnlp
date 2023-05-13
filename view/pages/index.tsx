@@ -1,8 +1,12 @@
 import LandingNavbar from '@/components/LandingNavbar';
 import { Callout, Divider } from '@blueprintjs/core';
+import { useRouter } from 'next/router';
 import React from 'react';
+import { GoogleLoginButton } from 'react-social-login-buttons';
 
 export default function Start() {
+  const router = useRouter();
+
   return <>
     <div className='h-screen '>
       <div className='h-full rotating-dots'>
@@ -14,6 +18,8 @@ export default function Start() {
           <div className='pt-3 text-xl md:text-3xl lg:flex lg:space-x-3 font-sans font-light mb-12'>
             <h2 className='-skew-x-12'>An AI unit planner for IB teachers</h2>
           </div>
+
+          <GoogleLoginButton onClick={() => router.push('/api/oauth/google/login')} className='max-w-xs' />
         </div>
       </div>
     </div>

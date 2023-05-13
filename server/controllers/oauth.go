@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -65,6 +66,8 @@ func GoogleLogin(c echo.Context) error {
 	sess := middleware.GetSessionValues(c)
 	sess.OauthState = generateStateOauthCookie()
 	sess.Save(c)
+
+	log.Println("Attempted GoogleLogin")
 
 	googleOauthConfig := getGoogleOauthConfig()
 

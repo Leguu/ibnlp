@@ -38,12 +38,14 @@ export const useRequests = () => {
     })
       .then(r => {
         options?.onSuccess?.(r.data);
+        return r.data;
       })
       .catch(e => {
         if (options?.handleErrors !== false) {
           handleErrors(e);
         }
         options?.onError?.();
+        return undefined;
       }),
     []
   );
@@ -54,12 +56,14 @@ export const useRequests = () => {
     })
       .then(r => {
         options?.onSuccess?.(r.data);
+        return r.data;
       })
       .catch(e => {
         if (options?.handleErrors !== false) {
           handleErrors(e);
         }
         options?.onError?.();
+        return undefined;
       }),
     []
   );
@@ -70,12 +74,14 @@ export const useRequests = () => {
     })
       .then(r => {
         options?.onSuccess?.(r?.data);
+        return r.data;
       })
       .catch(e => {
         if (options?.handleErrors !== false) {
           handleErrors(e);
         }
         options?.onError?.();
+        return undefined;
       }),
     []
   );

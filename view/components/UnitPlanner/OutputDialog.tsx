@@ -1,5 +1,6 @@
 import { AppToaster } from '@/utils/toaster';
 import { Button, Classes, Dialog, DialogBody, DialogProps } from '@blueprintjs/core';
+import ChatBox from '../ChatBox/ChatBox';
 
 interface Props extends DialogProps {
   controller?: AbortController;
@@ -22,13 +23,6 @@ const OutputDialog = ({ loading, children, controller, ...props }: Props) => {
         <div className='flex-grow' />
 
         {!loading && <>
-          <Button icon='clipboard' onClick={() => {
-            navigator.clipboard.writeText(children as string);
-            AppToaster?.show({ message: 'Copied to clipboard', intent: 'success' });
-          }}>
-            Copy
-          </Button>
-
           <Button icon='cross' className='ml-2' onClick={e => props.onClose?.(e)} />
         </>}
 
@@ -36,11 +30,9 @@ const OutputDialog = ({ loading, children, controller, ...props }: Props) => {
           <Button icon='cross' className='ml-2' onClick={() => controller.abort()} />
         )}
       </div>
-      <DialogBody className='whitespace-pre-line'>
-        {children}
-        {loading && (
-          <div className='inline-flex ml-1 h-3 w-2 bg-white blinking' />
-        )}
+
+      <DialogBody>
+        <ChatBox initialResponse={children} loading={loading} />
       </DialogBody>
     </Dialog>
   );

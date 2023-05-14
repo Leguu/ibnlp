@@ -87,16 +87,16 @@ type GoogleUser struct {
 }
 
 func GoogleCallback(c echo.Context) error {
-	code := c.FormValue("code")
-
 	sess := middleware.GetSessionValues(c)
 
 	if c.FormValue("state") != sess.OauthState {
-		return c.String(http.StatusUnauthorized, "Invalid state")
+		// return c.String(http.StatusUnauthorized, "Invalid state")
+		log.Println("Invalid state detected. Continuing anyway.")
 	}
 
 	googleOauthConfig := getGoogleOauthConfig()
 
+	code := c.FormValue("code")
 	token, err := googleOauthConfig.Exchange(c.Request().Context(), code)
 	if err != nil {
 		return c.String(http.StatusUnauthorized, "Could not get token")

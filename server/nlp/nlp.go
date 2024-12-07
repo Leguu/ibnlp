@@ -14,9 +14,17 @@ import (
 
 type ChatGPTProvider struct{}
 
+// const (
+//
+//	chatGPTURL   = "https://api.openai.com/v1/chat/completions"
+//	defaultModel = "gpt-3.5-turbo"
+//
+// )
+
+// OLlama is a drop-in replacement for openai
 const (
-	chatGPTURL   = "https://api.openai.com/v1/chat/completions"
-	defaultModel = "gpt-3.5-turbo"
+	chatGPTURL   = "http://localhost:11434/v1/chat/completions"
+	defaultModel = "llama3.2"
 )
 
 type ChatGPTMessage struct {

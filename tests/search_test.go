@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"ibnlp/search"
+	"ibnlp/server/search"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/semaphore"

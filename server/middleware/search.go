@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"ibnlp/search"
+	"ibnlp/server/search"
 
 	"github.com/labstack/echo/v4"
 )

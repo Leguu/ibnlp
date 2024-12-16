@@ -7,9 +7,9 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"ibnlp/search"
 	"ibnlp/server/middleware"
 	"ibnlp/server/nlp"
+	"ibnlp/server/search"
 
 	"github.com/labstack/echo/v4"
 )

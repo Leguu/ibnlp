@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/exec"
 
-	"ibnlp/search"
 	"ibnlp/server/controllers"
 	"ibnlp/server/middleware"
+	"ibnlp/server/search"
 
 	"github.com/glebarez/sqlite"
 	"github.com/labstack/echo/v4"
